@@ -29,7 +29,7 @@ def rename(path_list, output_dir) -> None:
     #initialize counter for naming format "{object}_{counter}"
     for path in path_list:
         #iterate through generated paths
-        ds_object = re.search(r"drill|wacker", path)
+        ds_object = re.search(r"drill|wacker|glue", path)
         #look for objects in the dataset for the naming format
         if ds_object:
             #if the object is in the name
@@ -68,7 +68,7 @@ def convert_to_jpg(path_list: list) -> None:
     return None
 
 if __name__ == "__main__":
-    pths = generate_img_path_list('data/raw/wacker')
+    pths = generate_img_path_list('data/raw/glue')
     convert_to_jpg(pths)
-    rename(pths, 'wacker_formatted')
+    rename(pths, 'glue_formatted')
 
