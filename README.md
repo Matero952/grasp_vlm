@@ -1,5 +1,5 @@
 Pistol Grip Objects:  
-    drill, weed wackers, weed wackers, glue gun, circular saw, nailgun.  
+    drill, weed wackers, glue gun, circular saw, nailgun.  
 Handle Objects:  
     screwdriver, wrench, soldering tool, allen key, hammer.  
 Annotations for Pistol Grip Objects:  
