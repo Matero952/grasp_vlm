@@ -68,7 +68,7 @@ def convert_to_jpg(path_list: list) -> None:
     return None
 
 if __name__ == "__main__":
-    pths = generate_img_path_list('data/raw/drill')
+    pths = generate_img_path_list('data/raw/glue')
     convert_to_jpg(pths)
-    rename(pths, 'drill_reformatted')
+    rename(pths, 'glue_reformatted')
 
