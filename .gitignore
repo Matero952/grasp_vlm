@@ -1,2 +1,5 @@
 venv
 .env
+data/raw
+data/README.dataset.txt
+data/README.roboflow.txt

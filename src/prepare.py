@@ -2,6 +2,7 @@ import os
 from PIL import Image
 import re
 
+'''THIS FILE IS FOR ADDING TO THE DATASET AND ORGANIZING BY GROUP. YOU DONT ACTUALLY NEED THIS FILE UNLESS YOU WANT TO ADD.'''
 def generate_img_path_list(parent_dir: str) -> list:
     '''Generates img path list given a parent directory. This img path list will contain
         all of the images/files in the subdirectories of parent_dir.\n
@@ -29,7 +30,7 @@ def rename(path_list, output_dir) -> None:
     #initialize counter for naming format "{object}_{counter}"
     for path in path_list:
         #iterate through generated paths
-        ds_object = re.search(r"drill|wacker|glue|saw|nail|screwdriver", path)
+        ds_object = re.search(r"drill|wacker|glue|saw|nail|screwdriver|wrench|solder|allen|hammer", path)
         #look for objects in the dataset for the naming format
         if ds_object:
             #if the object is in the name
@@ -68,7 +69,7 @@ def convert_to_jpg(path_list: list) -> None:
     return None
 
 if __name__ == "__main__":
-    pths = generate_img_path_list('data/raw/screwdriver')
+    pths = generate_img_path_list('data/raw/wacker')
     convert_to_jpg(pths)
-    rename(pths, 'screwdriver_formatted')
+    rename(pths, 'wacker_formatted')
 
