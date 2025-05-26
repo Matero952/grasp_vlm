@@ -49,7 +49,7 @@ class GrokExperiment(VisionExperiment):
     def __init__(self, model, prompt):
         super().__init__(model, prompt)
         self.client = OpenAI(api_key=os.getenv('GROK'), base_url="https://api.x.ai/v1")
-    def run_img(self, img_path):
+    def process_sample(self, img_path):
         converted_img_data, _ = self.convert_to_base64(img_path=img_path)
         messages = [
         {
@@ -70,7 +70,7 @@ class GrokExperiment(VisionExperiment):
                 },
         ]
         completion = self.client.chat.completions.create(
-            model="grok-2-vision-latest",
+            model=self.model,
             messages=messages,
             temperature=0.01,
         )
