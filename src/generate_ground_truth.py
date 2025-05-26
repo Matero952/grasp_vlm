@@ -32,8 +32,13 @@ def generate_ground_truth(json_dir, output_dir):
             #retrieve the full tool name for clarity
             bbox_info = data['annotations'][i]
             #bbox annotations are by image id, so we can just index by i
-            bbox_dim = bbox_info['bbox'][0:4]
-            #[x, y, width, height]
+            bbox_x1 = bbox_info['bbox'][0]
+            bbox_y1 = bbox_info['bbox'][1]
+            bbox_x2 = bbox_x1 + bbox_info['bbox'][2]
+            bbox_y2 = bbox_y1 + bbox_info['bbox'][3]
+            bbox_dim = [bbox_x1, bbox_y1, bbox_x2, bbox_y2]
+            # bbox_dim = bbox_info['bbox'][0:4]
+            #[x, y, width, height] is coco json(the annotation format), but vlms probably perform better with [x1, y1, x2, y2] so I just convert it
             bbox_area = bbox_info['area']
             #area of bound box for later observations
             annotation_type = "index_finger" if tool in index_finger else "four_finger"

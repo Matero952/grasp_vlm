@@ -1,6 +1,7 @@
 import google.genai as genai
 import os
 import re
+#This is the class for the Gemini vision testing
 class GeminiExperiment:
     def __init__(self, model, prompt):
         self.model = model
