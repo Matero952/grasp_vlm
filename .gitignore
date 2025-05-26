@@ -3,3 +3,5 @@ venv
 data/raw
 data/README.dataset.txt
 data/README.roboflow.txt
+src/__pycache__
+src/agents/__pycache__
