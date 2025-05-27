@@ -1,9 +1,12 @@
 import anthropic
 from openai import OpenAI
+from dotenv import load_dotenv
 import os
 import base64
 import mimetypes
 import re
+load_dotenv()
+
 class VisionExperiment:
     def __init__(self, model, prompt_func):
         self.model = model
@@ -72,7 +75,9 @@ class GrokExperiment(VisionExperiment):
         completion = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
-            temperature=0.01,
+            # temperature=0.01,
         )
         return completion.choices[0].message.content
+if __name__ == "__main__":
+    print(os.getenv('GROK'))
         

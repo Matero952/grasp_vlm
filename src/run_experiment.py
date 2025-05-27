@@ -13,7 +13,7 @@ def run_experiment(experiment, ground_truth_csv, iou_tolerance = None):
     os.makedirs("results", exist_ok=True)
     save_dir = os.path.join("results", experiment.model)
     os.makedirs(save_dir, exist_ok=True)
-    new_df_path = os.path.join(save_dir, f"{experiment.model}_results.csv")
+    new_df_path = os.path.join(save_dir, f"{experiment.model}_results_w_reasoning.csv")
     if iou_tolerance is not None:
         correct = 0
         seen = 0
@@ -100,7 +100,7 @@ def get_pred_bbox_area(bbox):
     height = abs(y2 - y1)
     return width * height
 if __name__ == "__main__":
-    run_experiment(ClaudeExperiment("claude-3-haiku-20240307", generate_prompt), "src/ground_truth.csv")
+    run_experiment(GrokExperiment("grok-2-vision-1212", generate_prompt), "src/ground_truth.csv")
 
 
 
