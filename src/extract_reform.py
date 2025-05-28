@@ -6,6 +6,7 @@ import regex as re
 import pandas as pd
 import ast
 from run_experiment import get_iou, get_pred_bbox_area
+import csv
 def reform_bad_columns(output_csv_path, txt_file, ground_truth_file='src/ground_truth.csv'):
     #aggregates all of the saved data and makes it into a new df.
     #saves to a csv output_csv_path
@@ -147,10 +148,25 @@ def denormalize(idx, raw_bnd_box, gt_file) -> list:
     width, height = [float(i) for i in image_dims]
     x_min, y_min, x_max, y_max = normalized_bnd_box
     return [x_min * width, y_min * height, x_max * width, y_max * height]
+# def clean_text(text):
+#     if not isinstance(text, str):
+#         return text
+#     text = re.sub(r'\s+', ' ', text)           
+#     return text.strip()   
 
+# def compact(csv_file, output_csv_path):
+#     df = pd.read_csv(csv_file)
+    
+#     # Apply cleaning only to the 'text_output' column (or all object columns)
+#     text_columns = df.select_dtypes(include='object').columns
+#     for col in text_columns:
+#         df[col] = df[col].apply(clean_text)
+#     df.to_csv(output_csv_path, index=False, quoting=csv.QUOTE_MINIMAL)
+            
 if __name__ == "__main__":
     # reform_bad_columns('results/claude-3-5-haiku-latest/claude-3-5-haiku-latest_reformed.csv', 'results/raw_text_outputs/claude-3-5-haiku-latest_results_w_reasoning.txt')
-    reform_bad_columns('results/gemini-1.5-flash/gemini-1.5-flash_results_w_reasoning_reformed.csv', 'results/raw_text_outputs/gemini-1.5-flash_w_reasoning.txt')
+    reform_bad_columns('results/gemini-2.0-flash/gemini-2.0-flash_results_w_reasoning_reformed.csv', 'results/raw_text_outputs/gemini-2.0-flash_w_reasoning.txt')
     # with open('results/raw_text_outputs/claude-3-haiku-20240307_results_w_reasoning.txt', 'r', encoding='utf-8') as f:
     #     content = f.read()
     #     print(repr(content))
+    # compact('results/gemini-2.0-flash/gemini-2.0-flash_results_w_reasoning_reformed.csv', 'src/test.csv')

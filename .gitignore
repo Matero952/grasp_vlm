@@ -5,3 +5,8 @@ data/README.dataset.txt
 data/README.roboflow.txt
 src/__pycache__
 src/agents/__pycache__
+results/claude-3-5-haiku-latest/old
+results/claude-3-haiku-20240307/old
+results/gemini-1.5-flash/old
+results/gemini-2.0-flash/old
+results/raw_text_outputs
