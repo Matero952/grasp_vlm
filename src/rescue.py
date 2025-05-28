@@ -1,10 +1,30 @@
-import csv
 import regex as re
-import pandas as pd
-def search_and_rescue(input_csv, ground_truth):
-    #so the csvs are basically messed up beyond repair so this aims to extract 
-    # all that it can to form a fixed csv
-    file_paths = [
+import ast
+def get_text_output_chunks(txt_file):
+    dih = {}
+    with open(txt_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+        # print(content)
+    chunks = re.split(r'(?i)(?=Let)', content)
+    chunks = [chunk.strip().replace('""', "'").replace('[', "'[").replace(']', "]'") for chunk in chunks if chunk.strip()]
+    del(chunks[0])
+    for i in range(0, 200):
+        pred_bnd_box = get_pred_bnd_box(chunks[i])
+        try:
+            dih[i] = [chunks[i], [float(i) for i in pred_bnd_box], file_paths[i]]
+        except ValueError:
+            print(f"malformed chunk: {chunks[i]}")
+            print(f"repr: {repr(chunks[i])}")
+            breakpoint()
+        print(type(pred_bnd_box))
+    # for i in dih.values():
+    #     if '' in i:
+    #         print(i)
+    #         breakpoint()
+    print(repr(chunks[199]))
+    return dih
+
+file_paths = [
     "data/roboflow/screwdriver_19_jpg.rf.6250085fa1d7df8666abd0f2a6b03e19.jpg",
     "data/roboflow/glue_13_jpg.rf.0df8478932e9b34ba87460e9bfd87b01.jpg",
     "data/roboflow/saw_18_jpg.rf.ab0a958d9006ec43edf55d35ca68d3de.jpg",
@@ -206,26 +226,12 @@ def search_and_rescue(input_csv, ground_truth):
     "data/roboflow/wacker_19_jpg.rf.3173357cc72f6961605adbc301c4d09f.jpg",
     "data/roboflow/nail_3_jpg.rf.7da9e3dd7ccb178910591121f6b637a6.jpg"
 ]
-    df = pd.read_csv(ground_truth)
-    with open(input_csv) as f:
-        reader = csv.DictReader(f)
-        counter = 0
-        file_paths = []
-        for row in reader:
-            
-            merged = ' '.join(str(v) for v in row.values())
-            print(merged)
-            file_path_found = re.search(r"data\/[^\s]*?\.jpg", merged)
-            if file_path_found:
-                file_paths.append(file_path_found.group(0))
-                counter += 1
-            pattern = r"\[\s*(\d+\.?\d*)\s*,\s*(\d+\.?\d*)\s*,\s*(\d+\.?\d*)\s*,\s*(\d+\.?\d*)\s*\]"
-            bboxes = re.findall(pattern, merged)
-        print(len(bboxes))
-    
+def get_pred_bnd_box(text:str):
+    pattern = r'\[ *(\d*\.?\d+), *(\d*\.?\d+), *(\d*\.?\d+), *(\d*\.?\d+) *\]'
+    pred_bbox_match = re.findall(pattern, text)
+    if pred_bbox_match:
+        return pred_bbox_match[-4:]
+    assert 0>1
         
-            # print(merged)
-            # print(file_path_found)
-            # print(row['text_output'])
 if __name__ == "__main__":
-    search_and_rescue('results/claude-3-5-haiku-latest/claude-3-5-haiku-latest_results_w_reasoning.csv', 'src/ground_truth.csv')
+    print(get_text_output_chunks('src/i_hate_myself.txt'))
