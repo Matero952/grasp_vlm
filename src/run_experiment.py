@@ -8,21 +8,22 @@ import csv
 import regex as re
 import ast
 import time
+import numpy as np
 
 def run_experiment(experiment, ground_truth_csv, iou_tolerance = None):
     os.makedirs("results", exist_ok=True)
     save_dir = os.path.join("results", experiment.model)
     os.makedirs(save_dir, exist_ok=True)
-    new_df_path = os.path.join(save_dir, f"{experiment.model}_results_w_reasoning.csv")
+    new_df_path = os.path.join(save_dir, f"grok-2-vision-1212_results_w_reasoning.csv")
     if iou_tolerance is not None:
         correct = 0
         seen = 0
     if os.path.exists(new_df_path):
-        df = pd.read_csv(new_df_path)
+        df = pd.read_csv(new_df_path, sep=';')
     else:
         df = pd.DataFrame(columns=["img_id", "img_path", "text_output", "pred_bbox", "target_bbox", "iou"])
     with open(ground_truth_csv) as f:
-        reader = csv.DictReader(f)
+        reader = csv.DictReader(f, delimiter=';')
         counter = 0
         for row in reader:
             if str(row['img_id']) in df['img_id'].astype(str).values:
@@ -42,11 +43,11 @@ def run_experiment(experiment, ground_truth_csv, iou_tolerance = None):
                 else:
                     iou = get_iou(pred_bbox, target_bbox)
                     pred_bbox_area = get_pred_bbox_area(pred_bbox)
-                df.loc[len(df)] = [row['img_id'], row['img_path'], text, pred_bbox, target_bbox, iou]
+                df.loc[len(df)] = [row['img_id'], row['img_path'], sanitize_text(clean_text(text)), pred_bbox, target_bbox, iou]
                 if iou_tolerance is not None and pred_bbox is not None:
                     correct += 1 if iou > iou_tolerance else 0
                     seen += 1
-                df.to_csv(new_df_path, index=False)
+                df.to_csv(new_df_path, index=False, sep=';')
             if iou_tolerance is not None:
                 print(f"img_id: {row['img_id']}, accuracy: {correct / seen}")
             else:
@@ -71,9 +72,12 @@ def get_pred_bbox(text: str):
     #returns it as a list
 
 def get_iou(bbox_a, bbox_b):
+    if len(bbox_a) < 4:
+        bbox_a = [0, 0, 0, 0]
+    if len(bbox_b) < 4:
+        bbox_b = [0, 0, 0 ,0]
     x1_1, y1_1, x2_1, y2_1 = bbox_a
-    x1_2, y1_2, x2_2, y2_2 = bbox_b
-    
+    x1_2, y1_2, x2_2, y2_2 = bbox_b    
     #get intersection coordinates
     x1_inter = max(x1_1, x1_2)
     y1_inter = max(y1_1, y1_2)
@@ -99,6 +103,21 @@ def get_pred_bbox_area(bbox):
     width = abs(x2 - x1)
     height = abs(y2 - y1)
     return width * height
+def sanitize_text(text):
+    if not isinstance(text, str):
+        return text
+    text = text.replace('"', '')
+    text = text.replace('""', '')
+    text = text.replace('""""', '')  
+    text = text.replace('\n', ' ').replace('\r', ' ')
+    return f"{text.strip()}"
+
+def clean_text(text):
+    if not isinstance(text, str):
+        return text
+    # Replace all runs of whitespace (spaces, newlines, tabs) with a single space
+    cleaned = re.sub(r'\s+', ' ', text)
+    return cleaned.strip()
 if __name__ == "__main__":
     run_experiment(GrokExperiment("grok-2-vision-1212", generate_prompt), "src/ground_truth.csv")
 

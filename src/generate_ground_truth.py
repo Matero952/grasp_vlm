@@ -45,7 +45,7 @@ def generate_ground_truth(json_dir, output_dir):
             #index or 4 finger annotation
             print(img_id, img_path, img_dim, tool, bbox_dim, bbox_area, annotation_type)
             new_df.loc[i] = [img_id, img_path, img_dim, tool, bbox_dim, bbox_area, annotation_type]
-            new_df.to_csv(ground_truth_csv_path, index=False)
+            new_df.to_csv(ground_truth_csv_path, index=False, sep=';')
     return ground_truth_csv_path
 if __name__ == "__main__":
     generate_ground_truth('data/roboflow/_annotations.coco.json', "ground_truth.csv")

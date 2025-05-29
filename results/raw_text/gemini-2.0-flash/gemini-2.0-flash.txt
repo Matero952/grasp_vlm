@@ -173,7 +173,7 @@
 "```json
                                                                                   [284, 395, 451, 520]
                                                                                   ```"
- I'm not capable of performing that action.  Can I help with something else?                   
+"I'm not capable of performing that action.  Can I help with something else?"                   
 "```json
                                                                                   [527, 402, 662, 497]
                                                                                   ```"
@@ -385,7 +385,7 @@
 "```json
                                                                                   [501, 530, 564, 634]
                                                                                   ```"
- I'm not able to analyze that image because I cannot identify any fingertips on the image.     
+"I'm not able to analyze that image because I cannot identify any fingertips on the image."     
 "```json
                                                                                   [546, 562, 607, 603]
                                                                                   ```"
