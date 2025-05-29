@@ -1,7 +1,6 @@
 import csv
 import regex as re
 #these functions are used to clean up csvs as on the first experiment they came out a little funky
-from extract_reform import get_bnd_boxes, needs_denormalize, denormalize
 from run_experiment import get_iou, get_pred_bbox_area
 import pandas as pd
 import ast
@@ -121,6 +120,50 @@ def check(csv):
     print(df['text_output'])
     print(len(df['text_output']))
 
+def get_bnd_boxes(indv_responses: list) -> list:
+    bnd_boxes = []
+    counter = 0
+    for idx, i in enumerate(indv_responses):
+        i = i.replace('""', '"')
+        numbers_match = re.findall(r'\b\d+\.\d+|\b\d+|\B\.\d+', i)
+        if numbers_match:
+            if needs_denormalize(numbers_match[-4:]):
+                #runs check for denormalization because 
+                #some bnd boxes are normalized and some are not
+                bbox = denormalize(idx, numbers_match[-4:], 'src/ground_truth.csv')
+                #denormalizing if the vlm outputted number normalized 0 - 1
+            else:
+                #otherwise we just take the vlm-outputted bnd box
+                bbox = [float(i) for i in numbers_match[-4:]]
+        else:
+            bbox = [0, 0, 0, 0]
+        bnd_boxes.append(bbox)
+    return bnd_boxes
+
+def needs_denormalize(raw_bnd_box) -> bool:
+    #runs a check to see if denormalization is necessary
+    foo = [float(i) for i in raw_bnd_box]
+    for i in foo:
+        if i <= 1.0:
+            #checks if there is a float less than one,
+            #which indicates that the bnd box has been normalized
+            return True
+        else:
+            continue
+    return False
+
+def denormalize(idx, raw_bnd_box, gt_file) -> list:
+    #indv responses are ordered correctly(they line up with img ids), so i can just get idx
+    normalized_bnd_box = [float(i) for i in raw_bnd_box]
+    df = pd.read_csv(gt_file, sep=';')
+    df.columns = df.columns.str.replace('"', '', regex=False)
+    to_check_row = df[df['img_id'].astype(str) == str(idx)]
+    image_dims = ast.literal_eval(to_check_row['image_dim'].iloc[0])
+    width, height = [float(i) for i in image_dims]
+    x_min, y_min, x_max, y_max = normalized_bnd_box
+    return [x_min * width, y_min * height, x_max * width, y_max * height]
+
+
 def pls_grok(txt_file):
     with open(txt_file, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -130,7 +173,7 @@ def pls_grok(txt_file):
                 counter += 1
     print(counter)
 # print(len(get_bnd_boxes(split_by_indentation('results/raw_text/grok-2-vision-1212/grok-2-vision-1212.txt'))))
-reform('results/raw_text/grok-2-vision-1212-reasoning/grok-2-vision-1212-reasoning.txt')
+reform('results/raw_text(depr)/grok-2-vision-1212-reasoning/grok-2-vision-1212-reasoning.txt')
 # pls_grok('results/raw_text/grok-2-vision-1212-reasoning/grok-2-vision-1212-reasoning.txt')
 # split_by_custom_delim('results/raw_text/claude-3-5-haiku-latest-reasoning/claude-3-5-haiku-latest-reasoning.txt', r'"""\n|I apologize')
 # check('output.csv')

@@ -140,19 +140,7 @@ def denormalize(idx, raw_bnd_box, gt_file) -> list:
     x_min, y_min, x_max, y_max = normalized_bnd_box
     return [x_min * width, y_min * height, x_max * width, y_max * height]
 
-def please_work(file='results/gemini-2.0-flash/gemini-2.0-flash_results_w_reasoning_reformed_test.csv'):
-    with open(file) as f:
-        reader = csv.DictReader(f)
-        print(reader)
-        total_rows = 0
-        iou_count = 0
-        for row in reader:
-            total_rows +=1
-            if row['iou'] is not None:
-                print(row['iou'])
-                iou_count += 1
-        print(total_rows)
-        print(iou_count)
+
 
 
     
