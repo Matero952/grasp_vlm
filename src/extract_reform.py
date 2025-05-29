@@ -6,6 +6,8 @@ import pandas as pd
 import ast
 from run_experiment import get_iou, get_pred_bbox_area
 import csv
+import rbql
+import subprocess
 def reform_bad_columns(output_csv_path, txt_file, ground_truth_file='src/ground_truth.csv'):
     #aggregates all of the saved data and makes it into a new df.
     #saves to a csv output_csv_path
@@ -13,11 +15,13 @@ def reform_bad_columns(output_csv_path, txt_file, ground_truth_file='src/ground_
     bnd_boxes = get_bnd_boxes(indv_responses)
     df = pd.read_csv(ground_truth_file)
     rows = []
+    print(len(indv_responses))
+
     for i in range(0, 200):
         to_check_row = df[df['img_id'].astype(str) == str(i)]
         img_id = to_check_row['img_id'].values[0]
         img_path = to_check_row['img_path'].values[0]
-        text_output = indv_responses[i]
+        text_output = indv_responses[i].replace('\n', '').replace('\r', '').strip()
         pred_bbox = bnd_boxes[i]
         if len(pred_bbox) != 4:
             pred_bbox = [0, 0, 0, 0]
@@ -31,7 +35,7 @@ def reform_bad_columns(output_csv_path, txt_file, ground_truth_file='src/ground_
         row = [img_id, img_path, text_output, str(pred_bbox), pred_bbox_area, str(target_bbox), iou]
         rows.append(row)
     new_df = pd.DataFrame(rows, columns=['img_id', 'img_path', 'text_output', 'pred_bbox', 'pred_bbox_area', 'target_bbox', 'iou'])
-    new_df.to_csv(output_csv_path)
+    new_df.to_csv(output_csv_path, sep=',', index=False, quoting=csv.QUOTE_ALL)
     return new_df
 
 #reform is not really necessary reform_bad_columns kinda does everything
@@ -63,14 +67,17 @@ def organize_responses(txt_file:str) -> list:
     #this is a text file of ONLY the models text outputs, nothing else
     with open(txt_file, 'r', encoding='utf-8') as f:
         next(f)
-        next(f)
         #SKIP AS MANY LINES AS YOU NEED TO MAKE THE EXTRACTION WORK
         #skipping the first line because it doesnt 
         #have a 'Let' so it messes up further extraction
         content = f.read()
     # responses = re.split(r'(?i)(?=Let)', content)
-    responses = re.split(r'"\\n"', repr(content))
-    indv_responses = [i.strip() for i in responses if i.strip()]
+    # responses = re.split(r'"\\n"', repr(content))
+    responses = content.split('"\n"')
+    # responses = re.split(r'"\n"|\\n', content)
+    print(responses)
+    indv_responses = [(i.strip().strip('"')) for i in responses]
+    print(len(indv_responses))
     return indv_responses
 
 def get_bnd_boxes(indv_responses: list) -> list:
@@ -116,4 +123,6 @@ def denormalize(idx, raw_bnd_box, gt_file) -> list:
     return [x_min * width, y_min * height, x_max * width, y_max * height]
 
 if __name__ == "__main__":
-    reform_bad_columns('results/gemini-2.0-flash/gemini-2.0-flash_results_w_reasoning_reformed.csv', 'results/raw_text_outputs/gemini-2.0-flash_w_reasoning.txt')
+    reform_bad_columns('results/claude-3-haiku-20240307/claude-3-haiku-20240307_results_w_reasoning_reformed_maybe.csv', 'results/raw_text_outputs/claude-3-haiku-20240307_results_w_reasoning.txt')
+    # check('results/claude-3-5-haiku-latest/claude-3-5-haiku-latest_w_reasoning_reformed.csv')
+    # extract_responses('results/claude-3-haiku-20240307/claude-3-haiku-20240307_results_w_reasoning_reformed.csv')
