@@ -2,7 +2,7 @@ import os
 from PIL import Image
 import re
 
-'''THIS FILE IS FOR ADDING TO THE DATASET AND ORGANIZING BY GROUP. YOU DONT ACTUALLY NEED THIS FILE UNLESS YOU WANT TO ADD.'''
+'''THIS FILE IS FOR ADDING TO THE DATASET AND ORGANIZING BY GROUP. YOU DONT ACTUALLY NEED THIS FILE UNLESS YOU WANT TO ORGANIZE DATA In RAW DATA.'''
 def generate_img_path_list(parent_dir: str) -> list:
     '''Generates img path list given a parent directory. This img path list will contain
         all of the images/files in the subdirectories of parent_dir.\n
