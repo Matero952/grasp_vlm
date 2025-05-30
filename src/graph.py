@@ -2,11 +2,14 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import matplotlib.patches as patches
 import seaborn as sns
 import pandas as pd
 import regex as re
 import math
 from itertools import cycle
+import ast
+import os
 matplotlib.use('AGG')
 tool_dict = {'drill' : 'drill', 'wacker' : 'weed_wacker', 'glue' : 'glue_gun', 'saw' : 'circular_saw', 'nail' : 'nail_gun', 
     'screwdriver' : 'screwdriver', 'wrench' : 'wrench', 'solder' : 'solder_iron', 'allen' : 'allen_key', 'hammer' : 'hammer'}
@@ -44,16 +47,33 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv')
     key_cycle = cycle(img_paths_by_tool.keys())
     print(key_cycle)
     imgs = []
-    for i in range(len(img_paths_by_tool.keys())):
+    counter = 0
+    index = 0
+    keys = list(img_paths_by_tool.keys())
+    while counter < numb_of_imgs:
         key = next(key_cycle)
-        values = img_paths_by_tool[key][:amount_per_tool]
-        for i in values:
-            imgs.append(i)
+        path = img_paths_by_tool[key][index]
 
-    for j in range(left_over):
-        key = next(key_cycle)
-        imgs.append(img_paths_by_tool[key][len(img_paths_by_tool.keys()) + 1])
+        if key == keys[-1]:
+            index += 1
+        imgs.append(path)
+        counter += 1
+    print(imgs)
+    print(len((imgs)))
+    # for i in range(len(img_paths_by_tool.keys())):
+    #     key = next(key_cycle)
+    #     values = img_paths_by_tool[key][:amount_per_tool]
+    #     for i in values:
+    #         imgs_1.append(i)
 
+    # for j in range(left_over):
+    #     key = next(key_cycle)
+    #     imgs_1.append(img_paths_by_tool[key][len(img_paths_by_tool.keys()) + 1])
+
+    # if imgs_1 == imgs:
+    #     print(True)
+    # else:
+    #     print(False)
     #check for repeats
     for idx, i in enumerate(imgs):
         if i in imgs[idx+1:]:
@@ -65,7 +85,7 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv')
     cols = int(math.sqrt(num_imgs))
     rows = math.ceil(num_imgs/cols)
     print(num_imgs, cols, rows)
-    fig, axes = plt.subplots(rows, cols, figsize=(15, 3 * rows))
+    fig, axes = plt.subplots(rows, cols, figsize=(40, 7 * rows))
     axes = axes.flatten()
     for idx, img_path in enumerate(imgs):
         img = mpimg.imread(img_path)
@@ -73,16 +93,44 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv')
         axes[idx].axis('off')  # Turn off axes
         to_check_row_gt = gt[gt['img_path'].astype(str) == str(img_path)]
         img_id = to_check_row_gt['img_id']
-        to_check_row_df = df[df['img_id'].astype(str) == str(img_id)]
+        to_check_row_df = df[df['img_id'].astype(str) == str(img_id.iloc[0])]
         iou = to_check_row_df['iou']
-        axes[idx].set_title(f"ID: {img_id}, IoU: {iou}")
-
+        gt_bbox = ast.literal_eval(to_check_row_gt['bbox'].iloc[0])
+        gt_x_min, gt_y_min, gt_x_max, gt_y_max = gt_bbox
+        gt_width = gt_x_max - gt_x_min
+        gt_height = gt_y_max - gt_y_min
+        gt_rect = patches.Rectangle((gt_x_min, gt_y_min), gt_width, gt_height, linewidth=3, edgecolor='lime', facecolor='none', label='Green = Ground Truth')
+        pred_bbox = ast.literal_eval(to_check_row_df['pred_bbox'].iloc[0])
+        if len(pred_bbox) != 4:
+            pred_bbox = [0, 0, 0, 0]
+        print(f"type: {type(pred_bbox)}")
+        print(f"bbox: {pred_bbox}")
+        df_x_min, df_y_min, df_x_max, df_y_max = pred_bbox
+        df_width = df_x_max - df_x_min
+        df_height = df_y_max - df_y_min
+        model_match = re.search(models_regex, csv_path)
+        if model_match:
+            if 'reason' in csv_path:
+                model_name = f'{model_match.group(0)}_w_reasoning'
+            else:
+                model_name = model_match.group(0)
+        print(model_name)
+        df_rect = patches.Rectangle((df_x_min, df_y_min), df_width, df_height, linewidth=3, edgecolor='red', facecolor='none', label=f'Red = {model_name}')
+        axes[idx].add_patch(gt_rect)
+        axes[idx].add_patch(df_rect)
+        axes[idx].text(0.5, -0.1, f"{os.path.basename(to_check_row_gt['img_path'].iloc[0])}", transform=axes[idx].transAxes,
+            ha='center', va='top', fontsize=11, rotation=0)
+        # axes[idx].set_title(f"{to_check_row_gt['img_path'].iloc[0]}", fontsize=5)
     for j in range(idx + 1, len(axes)):
         axes[j].axis('off')
-
+    plt.suptitle(f'Prediction Grid for {model_name}', fontsize=45, y= 0.99)
+    plt.legend(f'Red = {model_name}, Green = Ground Truth')
     plt.tight_layout()
+    red_patch = patches.Patch(color='red', label=f'Red = {model_name}')
+    green_patch = patches.Patch(color='lime', label='Green = Ground Truth')
+    fig.legend(handles=[red_patch, green_patch], loc='upper right', fontsize=25)
     plt.show()
-    plt.savefig('src/test.png')
+    plt.savefig(f'results/{model_name}_prediction_grid.png')
 
 
 def get_ious(csv_list):
@@ -124,7 +172,7 @@ if __name__ == "__main__":
     #                 'results/gemini-2.0-flash-lite.csv', 'results/gemini-2.0-flash-reasoning_reason.csv', 'results/gemini-2.0-flash.csv', 'results/gemini-2.5-flash-preview-05-20-reasoning_reason.csv',
     #                 'results/gemini-2.5-flash-preview-05-20.csv', 'results/grok-2-vision-1212-reasoning_reason.csv', 'results/grok-2-vision-1212.csv'
     #                 ]))
-    plot_prediction_grid('results/claude-3-5-haiku-latest-reasoning_reason.csv', 64)
+    plot_prediction_grid('results/grok-2-vision-1212.csv', 64)
     # get_img_paths_by_tool('src/ground_truth.csv')
 
 
