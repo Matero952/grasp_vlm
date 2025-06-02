@@ -64,43 +64,40 @@ class OWLv2:
         - out_dict: dictionary containing a list of bounding boxes and a list of scores for each query
         """
         #Preprocess inputs
+        print(f"{img.shape=}")
         inputs = self.processor(text=querries, images=img, return_tensors="pt", do_rescale=False)
         inputs.to(self.device)
 
         #model forward pass
         with torch.no_grad():
             outputs = self.model(**inputs)
-        target_sizes = torch.tensor([img.shape[:2]])  # (height, width)
+        # print(f"img shape in woL: {img.shape}")
+        # print(img.shape[:2])
+        # target_sizes = torch.tensor([img.shape[:2]])  # (height, width)
+        channels, height, width = img.shape
+        target_sizes = torch.tensor([[height, width]], dtype=torch.float32)
+        target_sizes_2 = torch.tensor([img.shape[:2]])
+        # target_sizes = torch.tensor([img.shape[:2]], dtype=torch.float32)
+
+        print(f"target_sizes 1: {target_sizes}")
+        print(f"target sizes 2: {target_sizes_2}")
+        #breakpoint()
+
 
         results = self.processor.post_process_grounded_object_detection(outputs=outputs, target_sizes=target_sizes, threshold=0)[0]
-
-        # Extract labels, boxes, and scores
         label_lookup = {i: label for i, label in enumerate(querries)}
         all_labels = results["labels"]
         all_boxes = results["boxes"]
-        all_boxes = clip_boxes_to_image(all_boxes, img.shape[:2])
+        print(f"{all_boxes=}")
         all_scores = results["scores"]
-        if debug:
-            temp_pred = {}
-            for i, label in enumerate(querries):
-                mask = all_labels == i
-                text_label = label_lookup[i]
-                temp_pred[text_label] = {"boxes": all_boxes[mask], "scores": all_scores[mask]}
-            display_owl(img, temp_pred, window_prefix=f"All Boxes")
 
+        all_boxes = clip_boxes_to_image(all_boxes, (height, width))
         keep = remove_small_boxes(all_boxes, min_size=config["min_2d_box_side"])
         small_removed_boxes = all_boxes[keep]
         small_removed_scores = all_scores[keep]
         small_removed_labels = all_labels[keep]
-        if debug:
-            temp_pred = {}
-            for i, label in enumerate(querries):
-                mask = small_removed_labels == i
-                text_label = label_lookup[i]
-                temp_pred[text_label] = {"boxes": small_removed_boxes[mask], "scores": small_removed_scores[mask]}
-            display_owl(img, temp_pred, window_prefix=f"Small Boxes Removed")
 
-        #get integer to text label mapping
+        
         out_dict = {}
         #for each query, get the boxes and scores and perform NMS
         for i, label in enumerate(querries):
@@ -110,49 +107,9 @@ class OWLv2:
             mask = small_removed_labels == i
             instance_boxes = small_removed_boxes[mask]
             instance_scores = small_removed_scores[mask]
-
-            #Do NMS for the current label
-            pruned_boxes, pruned_scores, _ = nms(instance_boxes.cpu(), instance_scores.cpu(), iou_threshold=config["iou_2d_reduction"], three_d=False)
-            pruned_boxes  = torch.stack(pruned_boxes)
-            pruned_scores = torch.stack(pruned_scores)
-
-            if debug:
-                display_owl(img, {text_label: {"boxes": pruned_boxes, "scores": pruned_scores}}, window_prefix=f"Post NMS ")
-            #print(f"{pruned_boxes.shape=}, {pruned_scores.shape=}")
-
-            #Get rid of low scores
-            threshold = torch.quantile(pruned_scores, config["owlv2_discard_percentile"])
-            keep = pruned_scores > threshold
-            filtered_boxes  = pruned_boxes[keep]
-            filtered_scores = pruned_scores[keep]
-
-            # Normalize scores
-            filtered_scores = F.sigmoid(filtered_scores*config["sigmoid_gain"])
-            #mu    = filtered_scores.mean()
-            #sigma = filtered_scores.std(unbiased=False)
-            #z = (filtered_scores - mu) / sigma
-            #filtered_scores = F.softmax(z, dim=0)
-            # filtered_scores = filtered_scores / filtered_scores.sum()
-
-            # Update output dictionary
-            out_dict[text_label] = {"scores": filtered_scores, "boxes": filtered_boxes}
-
-            if debug:
-                print(f"{text_label=}")
-                print(f"    {all_labels.shape=}, {all_boxes.shape=}, {all_scores.shape=}")
-                print(f"    {small_removed_boxes.shape=}, {small_removed_scores.shape=}, {small_removed_labels.shape=}")
-                print(f"    {instance_scores.shape=}, {instance_boxes.shape=}")
-                print(f"    {pruned_boxes.shape=}, {pruned_scores.shape=}")
-                print(f"    {len(keep)=}")
-                print(f"    {filtered_scores.shape=}, {filtered_boxes.shape=}")
-                print(f"    {threshold=}")
-                print()
-                display_owl(img, {text_label: {"boxes": filtered_boxes, "scores": filtered_scores}}, window_prefix=f"Top {config['owlv2_discard_percentile']} quantile ")
-
-
-        if debug:
-            for key in out_dict:
-                print(f"{key=} {out_dict[key]['boxes'].shape=}, {out_dict[key]['scores'].shape=}")
+            out_dict[text_label] = {"scores": instance_scores, "boxes": instance_boxes}
+        for k, v in out_dict.items():
+            print(f"{k=}, {v=}")
         return out_dict, inputs['pixel_values'].shape
 
     def __str__(self):
