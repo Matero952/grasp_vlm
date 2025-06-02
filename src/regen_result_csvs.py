@@ -5,7 +5,7 @@ from run_experiment import get_iou, get_pred_bbox_area
 import pandas as pd
 import ast
 import os
-
+#TODO NEED TO UPDATE GEMINI RESULTS
 #reform gemini will work with gemini responses but not with claude or grok
 def reform(txt_file, ground_truth='src/ground_truth.csv'):
     #will work for the messed up gemini files, will not work for anything else.
@@ -33,7 +33,13 @@ def reform(txt_file, ground_truth='src/ground_truth.csv'):
     print(f"-1: {responses[-1]}")
     # del(responses[-1])
     #here, the last one was just blank for my delimiter search
+
     pred_bnd_boxes = get_bnd_boxes(responses)
+    if 'gemini' in txt_file:
+        for idx, i  in enumerate(pred_bnd_boxes):
+            gt_col = df[df['img_id'].astype(str) == str(idx)]
+            width, height = ast.literal_eval(gt_col['image_dim'].iloc[0])
+            pred_bnd_boxes[idx] = format_gemini(i, width, height)
     print(f"len bound box: {len(pred_bnd_boxes)}")
     # df.columns = df.columns.str.replace('"', '', regex=False)
     #universally cleans up df columns
@@ -49,6 +55,7 @@ def reform(txt_file, ground_truth='src/ground_truth.csv'):
         rows.append(row)
         print(repr(responses[i]))
     new_df = pd.DataFrame(rows)
+    # new_df.to_csv(output_csv, sep=';', encoding='utf-8', index=False)
     new_df.to_csv(output_csv, sep=';', encoding='utf-8', index=False)
     return None
 
@@ -163,6 +170,14 @@ def denormalize(idx, raw_bnd_box, gt_file) -> list:
     x_min, y_min, x_max, y_max = normalized_bnd_box
     return [x_min * width, y_min * height, x_max * width, y_max * height]
 
+def format_gemini(output_bnd_box, og_img_width, og_img_height) -> list:
+    y_min, x_min, y_max, x_max = output_bnd_box
+    y_min = y_min / 1000
+    x_min = x_min / 1000
+    y_max = y_max / 1000
+    x_max = x_max / 1000
+    return [int(x_min * og_img_width), int(y_min * og_img_height), int(x_max * og_img_width), int(y_max * og_img_height)]
+
 
 def pls_grok(txt_file):
     with open(txt_file, 'r', encoding='utf-8') as f:
@@ -172,8 +187,9 @@ def pls_grok(txt_file):
             if 'To determine' in line:
                 counter += 1
     print(counter)
+
 # print(len(get_bnd_boxes(split_by_indentation('results/raw_text/grok-2-vision-1212/grok-2-vision-1212.txt'))))
-reform('results/raw_text(depr)/grok-2-vision-1212-reasoning/grok-2-vision-1212-reasoning.txt')
+reform('results/raw_text/gemini-2.0-flash-lite/gemini-2.0-flash-lite.txt')
 # pls_grok('results/raw_text/grok-2-vision-1212-reasoning/grok-2-vision-1212-reasoning.txt')
 # split_by_custom_delim('results/raw_text/claude-3-5-haiku-latest-reasoning/claude-3-5-haiku-latest-reasoning.txt', r'"""\n|I apologize')
 # check('output.csv')
