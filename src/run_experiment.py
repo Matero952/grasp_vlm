@@ -9,12 +9,31 @@ import regex as re
 import ast
 import time
 import numpy as np
+def run_owl(experiment, ground_truth_csv, iou_tolerance = None):
+    os.makedirs("results", exist_ok=True)
+    save_dir = os.path.join("results", 'owlvit-base-patch32')
+    os.makedirs(save_dir, exist_ok=True)
+    new_df_path = os.path.join(save_dir, f"owlvit-base-patch32.csv")
+    if os.path.exists(new_df_path):
+        df = pd.read_csv(new_df_path, sep=';', encoding='utf-8')
+    else:
+        df = pd.DataFrame(columns=["img_id", "img_path", "pred_bbox", "target_bbox", "iou"])
+    with open(ground_truth_csv) as f:
+        reader = csv.DictReader(f, delimiter=';')
+        for row in reader:
+            if str(row['img_id']) in df['img_id'].astype(str).values:
+                print(f"Skipping: {str(row['img_id'])}")
+            else:
+                bboxs = experiment.
+
+
+
 
 def run_experiment(experiment, ground_truth_csv, iou_tolerance = None):
     os.makedirs("results", exist_ok=True)
     save_dir = os.path.join("results", experiment.model)
     os.makedirs(save_dir, exist_ok=True)
-    new_df_path = os.path.join(save_dir, f"grok-2-vision-1212_results_w_reasoning.csv")
+    new_df_path = os.path.join(save_dir, f"{experiment.model}_reasoning.csv")
     if iou_tolerance is not None:
         correct = 0
         seen = 0
@@ -119,7 +138,8 @@ def clean_text(text):
     cleaned = re.sub(r'\s+', ' ', text)
     return cleaned.strip()
 if __name__ == "__main__":
-    run_experiment(GrokExperiment("grok-2-vision-1212", generate_prompt), "src/ground_truth.csv")
+    # run_experiment(GrokExperiment("grok-2-vision-1212", generate_prompt), "src/ground_truth.csv")
+    run_experiment(GeminiExperiment("gemini-2.0-flash-lite", generate_prompt), "src/ground_truth.csv")
 
 
 

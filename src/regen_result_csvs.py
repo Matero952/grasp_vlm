@@ -12,7 +12,7 @@ def reform(txt_file, ground_truth='src/ground_truth.csv'):
     output_csv = os.path.basename(txt_file)
     output_csv = os.path.splitext(output_csv)[0]
     if 'reasoning' in txt_file:
-        output_csv = f"{output_csv}_reason.csv"
+        output_csv = f"{output_csv}.csv"
     else:
         output_csv = f"{output_csv}.csv"
     rows = []
@@ -39,7 +39,10 @@ def reform(txt_file, ground_truth='src/ground_truth.csv'):
         for idx, i  in enumerate(pred_bnd_boxes):
             gt_col = df[df['img_id'].astype(str) == str(idx)]
             width, height = ast.literal_eval(gt_col['image_dim'].iloc[0])
-            pred_bnd_boxes[idx] = format_gemini(i, width, height)
+            try:
+                pred_bnd_boxes[idx] = format_gemini(i, width, height)
+            except ValueError:
+                pred_bnd_boxes[idx] = [0, 0, 0, 0]
     print(f"len bound box: {len(pred_bnd_boxes)}")
     # df.columns = df.columns.str.replace('"', '', regex=False)
     #universally cleans up df columns
@@ -189,7 +192,7 @@ def pls_grok(txt_file):
     print(counter)
 
 # print(len(get_bnd_boxes(split_by_indentation('results/raw_text/grok-2-vision-1212/grok-2-vision-1212.txt'))))
-reform('results/raw_text/gemini-2.0-flash-lite/gemini-2.0-flash-lite.txt')
+reform('results/raw_text/gemini-2.5-flash-preview-05-20-reasoning/gemini-2.5-flash-preview-05-20-reasoning.txt')
 # pls_grok('results/raw_text/grok-2-vision-1212-reasoning/grok-2-vision-1212-reasoning.txt')
 # split_by_custom_delim('results/raw_text/claude-3-5-haiku-latest-reasoning/claude-3-5-haiku-latest-reasoning.txt', r'"""\n|I apologize')
 # check('output.csv')

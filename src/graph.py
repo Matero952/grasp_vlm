@@ -33,8 +33,8 @@ def plot_box_and_whiskers(iou_dict: dict):
     plt.savefig('src/iou_boxplt.png')
 
 def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv'):
-    df = pd.read_csv(csv_path, sep=';')
-    gt = pd.read_csv(gt_file, sep=';')
+    df = pd.read_csv(csv_path, sep=';', encoding='utf-8')
+    gt = pd.read_csv(gt_file, sep=';', encoding='utf-8')
     df.columns = df.columns.str.replace('"', '', regex=False)
     gt.columns = gt.columns.str.replace('"', '', regex=False)
     img_paths_by_tool = get_img_paths_by_tool(gt_file)
@@ -167,12 +167,12 @@ def get_img_paths_by_tool(csv_path):
 
 
 if __name__ == "__main__":
-    # plot_box_and_whiskers(get_ious(['results/claude-3-5-haiku-latest-reasoning_reason.csv', 'results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307-reasoning_reason.csv', 
-    #                 'results/claude-3-haiku-20240307.csv', 'results/gemini-1.5-flash-reasoning_reason.csv', 'results/gemini-1.5-flash.csv', 'results/gemini-2.0-flash-lite-reasoning_reason.csv',
-    #                 'results/gemini-2.0-flash-lite.csv', 'results/gemini-2.0-flash-reasoning_reason.csv', 'results/gemini-2.0-flash.csv', 'results/gemini-2.5-flash-preview-05-20-reasoning_reason.csv',
-    #                 'results/gemini-2.5-flash-preview-05-20.csv', 'results/grok-2-vision-1212-reasoning_reason.csv', 'results/grok-2-vision-1212.csv'
-    #                 ]))
-    plot_prediction_grid('results/grok-2-vision-1212.csv', 64)
+    plot_box_and_whiskers(get_ious(['results/claude-3-5-haiku-latest-reasoning_reason.csv', 'results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307-reasoning_reason.csv', 
+                    'results/claude-3-haiku-20240307.csv', 'results/gemini-1.5-flash-reasoning.csv', 'results/gemini-1.5-flash.csv', 'results/gemini-2.0-flash-lite-reasoning.csv',
+                    'results/gemini-2.0-flash-lite.csv', 'results/gemini-2.0-flash-reasoning_reason.csv', 'results/gemini-2.0-flash.csv', 'results/gemini-2.5-flash-preview-05-20-reasoning.csv',
+                    'results/gemini-2.5-flash-preview-05-20.csv', 'results/grok-2-vision-1212-reasoning_reason.csv', 'results/grok-2-vision-1212.csv'
+                    ]))
+    # plot_prediction_grid('results/gemini-2.5-flash-preview-05-20.csv', 64)
     # get_img_paths_by_tool('src/ground_truth.csv')
 
 
