@@ -9,6 +9,11 @@ import regex as re
 import ast
 import time
 import numpy as np
+from agents.owl import *
+from PIL import Image
+import torchvision.transforms as T
+import cv2
+import numpy as np
 def run_owl(experiment, ground_truth_csv, iou_tolerance = None):
     os.makedirs("results", exist_ok=True)
     save_dir = os.path.join("results", 'owlvit-base-patch32')
@@ -17,14 +22,49 @@ def run_owl(experiment, ground_truth_csv, iou_tolerance = None):
     if os.path.exists(new_df_path):
         df = pd.read_csv(new_df_path, sep=';', encoding='utf-8')
     else:
-        df = pd.DataFrame(columns=["img_id", "img_path", "pred_bbox", "target_bbox", "iou"])
+        df = pd.DataFrame(columns=["img_id", "img_path", "pred_bbox", "noun", "target_bbox", "iou"])
     with open(ground_truth_csv) as f:
         reader = csv.DictReader(f, delimiter=';')
         for row in reader:
             if str(row['img_id']) in df['img_id'].astype(str).values:
                 print(f"Skipping: {str(row['img_id'])}")
             else:
-                bboxs = experiment.
+                img = Image.open(str(row['img_path']))
+                tensor_img = T.ToTensor()(img) 
+                print(f"TENSOR IMG SHAPE: {tensor_img.shape}") 
+                #tried using pillow but it looks like max set it up for tensors so converted to img tensor
+                if 'index' in str(row['annotation_type']):
+                    noun = ['trigger']
+                else:
+                    noun = ['handle']
+                bboxs, owl_shape_tensor = experiment.predict(tensor_img, noun)
+                print(bboxs)
+                print(f"shape tensor: {owl_shape_tensor}")
+                breakpoint()
+                best_box = bboxs[noun[0]]['boxes'][torch.argmax(bboxs[noun[0]]['scores'])]
+                converted_box = reformat_owl(best_box.tolist(), tensor_img, owl_shape_tensor)
+                print(converted_box)
+                # print(best_box)
+                # print(type(best_box))
+                # best_box = best_box.tolist()
+                # print(best_box)
+                # print(ast.literal_eval(row['bbox']))
+                # top_left_x = best_box[0]
+                # top_left_y = best_box[1]
+                # bot_right_x = best_box[2]
+                # bot_right_y = best_box[3]
+                # print(top_left_x, type(top_left_x))
+                # print(top_left_y, type(top_left_y))
+                # print(bot_right_x, type(bot_right_x))
+                # print(bot_right_y, type(bot_right_y))
+                iou = get_iou(converted_box, ast.literal_eval(row['bbox']))
+                print(iou)
+                breakpoint()
+                # df.loc[len(df)] = [row['img_id'], row['img_path'], sanitize_text(clean_text(str(best_box))), noun[0], row['bbox']]
+                # reformatted = reformat_owl(best_box)
+                #not going to reformat because ground_truth_owl.csv is already in owls format
+
+                # df.loc[len(df)] = [sanitize_text(clean_text(row['img_id'])), sanitize_text(clean_text(row['img_path'])), sanitize_text(clean_text(str()))]
 
 
 
@@ -137,9 +177,29 @@ def clean_text(text):
     # Replace all runs of whitespace (spaces, newlines, tabs) with a single space
     cleaned = re.sub(r'\s+', ' ', text)
     return cleaned.strip()
+
+def reformat_owl(box, from_size_tensor, owl_tensor):
+    #converts (top_left_x, top_left_y, bottom_right_x, bottom_right_y)
+    #to (bot_x1, bot_y1, top_x2, top_y2)'
+    assert isinstance(from_size_tensor, torch.Tensor)
+    assert isinstance(owl_tensor, torch.Size)
+    x1, y1, x2, y2 = box
+    _, og_height, og_width = from_size_tensor.shape
+    print(owl_tensor)
+    print(f"og height: {og_height}, og_width: {og_width}")
+    breakpoint()
+    _, _, owl_height, owl_width = owl_tensor
+    print(f"owl height: {owl_height}, owl_width: {owl_width}")
+
+    fx = owl_width / og_width
+    print(fx)
+    fy = owl_height / og_height
+    print(fy)
+    return [x1 * fx, y1 * fy, x2 * fx, y2 * fy]
 if __name__ == "__main__":
     # run_experiment(GrokExperiment("grok-2-vision-1212", generate_prompt), "src/ground_truth.csv")
-    run_experiment(GeminiExperiment("gemini-2.0-flash-lite", generate_prompt), "src/ground_truth.csv")
+    # run_experiment(GeminiExperiment("gemini-2.0-flash-lite", generate_prompt), "src/ground_truth.csv")
+    run_owl(OWLv2(), 'src/ground_truth_owl.csv')
 
 
 

@@ -32,11 +32,18 @@ def generate_ground_truth(json_dir, output_dir):
             #retrieve the full tool name for clarity
             bbox_info = data['annotations'][i]
             #bbox annotations are by image id, so we can just index by i
-            bbox_x1 = bbox_info['bbox'][0]
-            bbox_y1 = bbox_info['bbox'][1]
-            bbox_x2 = bbox_x1 + bbox_info['bbox'][2]
-            bbox_y2 = bbox_y1 + bbox_info['bbox'][3]
-            bbox_dim = [bbox_x1, bbox_y1, bbox_x2, bbox_y2]
+            if 'owl' in output_dir:
+                top_left_x = bbox_info['bbox'][0]
+                top_left_y = bbox_info['bbox'][1] + bbox_info['bbox'][3]
+                bot_right_x = bbox_info['bbox'][0] + bbox_info['bbox'][2]
+                bot_right_y = bbox_info['bbox'][1]
+                bbox_dim = [top_left_x, top_left_y, bot_right_x, bot_right_y]
+            else:
+                bbox_x1 = bbox_info['bbox'][0]
+                bbox_y1 = bbox_info['bbox'][1]
+                bbox_x2 = bbox_x1 + bbox_info['bbox'][2]
+                bbox_y2 = bbox_y1 + bbox_info['bbox'][3]
+                bbox_dim = [bbox_x1, bbox_y1, bbox_x2, bbox_y2]
             # bbox_dim = bbox_info['bbox'][0:4]
             #[x, y, width, height] is coco json(the annotation format), but vlms probably perform better with [x1, y1, x2, y2] so I just convert it
             bbox_area = bbox_info['area']
@@ -48,5 +55,5 @@ def generate_ground_truth(json_dir, output_dir):
             new_df.to_csv(ground_truth_csv_path, index=False, sep=';')
     return ground_truth_csv_path
 if __name__ == "__main__":
-    generate_ground_truth('data/roboflow/_annotations.coco.json', "ground_truth.csv")
+    generate_ground_truth('data/roboflow/_annotations.coco.json', "ground_truth_owl.csv")
     

@@ -64,7 +64,7 @@ class OWLv2:
         - out_dict: dictionary containing a list of bounding boxes and a list of scores for each query
         """
         #Preprocess inputs
-        inputs = self.processor(text=querries, images=img, return_tensors="pt")
+        inputs = self.processor(text=querries, images=img, return_tensors="pt", do_rescale=False)
         inputs.to(self.device)
 
         #model forward pass
@@ -153,7 +153,7 @@ class OWLv2:
         if debug:
             for key in out_dict:
                 print(f"{key=} {out_dict[key]['boxes'].shape=}, {out_dict[key]['scores'].shape=}")
-        return out_dict
+        return out_dict, inputs['pixel_values'].shape
 
     def __str__(self):
         return f"OWLv2: {self.model.device}"
