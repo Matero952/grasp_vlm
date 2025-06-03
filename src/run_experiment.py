@@ -37,10 +37,10 @@ def run_owl(experiment, ground_truth_csv, iou_tolerance = None):
                 #tried using pillow but it looks like max set it up for tensors so converted to img tensor
                 if 'index' in str(row['annotation_type']):
                     # noun = ['trigger']
-                    noun = ['button to press with index finger']
+                    noun = ['press']
                 else:
                     # noun = ['handle']
-                    noun = ['graspable handle']
+                    noun = ['grasp']
                 bboxs = experiment.predict(tensor_img, noun)
                 print(bboxs)
                 best_box = bboxs[noun[0]]['boxes'][torch.argmax(bboxs[noun[0]]['scores'])]

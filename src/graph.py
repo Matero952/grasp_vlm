@@ -16,8 +16,6 @@ tool_dict = {'drill' : 'drill', 'wacker' : 'weed_wacker', 'glue' : 'glue_gun', '
 models_regex = r"claude-3-5-haiku-latest|claude-3-haiku-20240307|gemini-1.5-flash|gemini-2.0-flash|gemini-2.0-flash-lite|gemini-2.5-flash-preview-05-20|grok-2-vision-1212"
 
 def plot_box_and_whiskers(iou_dict: dict):
-    # df = pd.DataFrame({key: value for key, value in iou_dict.items()
-    # })
     df = pd.DataFrame(iou_dict)
     df = df.melt(var_name="Model", value_name="IoU")
     plt.figure(figsize=(16, 15))
