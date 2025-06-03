@@ -1,9 +1,11 @@
 Grasp VLM Prediction  
 The goal is to see how vlms can produce bounding boxes for finger placements on tools. 
+PLEASE NOTE THAT GENERALLY INDEX FINGER OBJECTS ARE MORE DIFFICULT BECAUSE THEIR LABELLED BBOX IN THE DATASET ARE MUCH SMALLER.
 Results so far:  
 ![IoUs for Vlms](src/iou_boxplt.png)  
 ![IoUs for Owl VIT](src/iou_boxplt_owl.png)  
-For owl, I experimented with prompting nouns, specifically with single word prompts vs. descriptive prompts.  
+For owl, I experimented with prompting nouns, specifically with single word prompts vs. descriptive prompts. 
+
 The dataset has 200 images and there are two main classes: index finger objects and four finger grasp objects.  
 For index finger objects, the agent outputs a bbox for the index finger for grasping. For four finger objects, the agent outputs a bbox for the four fingers that would wrap around the object. Within these two classes, there are many tools.
 The tools include:  
