@@ -37,30 +37,13 @@ def run_owl(experiment, ground_truth_csv, iou_tolerance = None):
                     noun = ['trigger']
                 else:
                     noun = ['handle']
-                bboxs, _= experiment.predict(tensor_img, noun)
+                bboxs = experiment.predict(tensor_img, noun)
                 print(bboxs)
-                breakpoint()
                 best_box = bboxs[noun[0]]['boxes'][torch.argmax(bboxs[noun[0]]['scores'])]
-                print(best_box)
-                print(ast.literal_eval(row['bbox']))
+                print(f'{best_box=}')
+                print(f'{ast.literal_eval(row['bbox'])=}')
                 breakpoint()
-                # converted_box = reformat_owl(best_box.tolist(), tensor_img, owl_shape_tensor)
-                # print(converted_box)
-                # print(best_box)
-                # print(type(best_box))
-                # best_box = best_box.tolist()
-                # print(best_box)
-                # print(ast.literal_eval(row['bbox']))
-                # top_left_x = best_box[0]
-                # top_left_y = best_box[1]
-                # bot_right_x = best_box[2]
-                # bot_right_y = best_box[3]
-                # print(top_left_x, type(top_left_x))
-                # print(top_left_y, type(top_left_y))
-                # print(bot_right_x, type(bot_right_x))
-                # print(bot_right_y, type(bot_right_y))
                 best_box = best_box.tolist()
-
                 iou = get_iou(best_box, ast.literal_eval(row['bbox']))
                 print(iou)
                 breakpoint()

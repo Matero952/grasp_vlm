@@ -85,6 +85,9 @@ class OWLv2:
 
 
         results = self.processor.post_process_grounded_object_detection(outputs=outputs, target_sizes=target_sizes, threshold=0)[0]
+        print(f"{results=}")
+        print(f'Goon')
+        breakpoint()
         label_lookup = {i: label for i, label in enumerate(querries)}
         all_labels = results["labels"]
         all_boxes = results["boxes"]
@@ -110,7 +113,7 @@ class OWLv2:
             out_dict[text_label] = {"scores": instance_scores, "boxes": instance_boxes}
         for k, v in out_dict.items():
             print(f"{k=}, {v=}")
-        return out_dict, inputs['pixel_values'].shape
+        return out_dict
 
     def __str__(self):
         return f"OWLv2: {self.model.device}"
