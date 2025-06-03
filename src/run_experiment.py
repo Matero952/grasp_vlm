@@ -18,7 +18,7 @@ def run_owl(experiment, ground_truth_csv, iou_tolerance = None):
     os.makedirs("results", exist_ok=True)
     save_dir = os.path.join("results", 'owlvit-base-patch32')
     os.makedirs(save_dir, exist_ok=True)
-    new_df_path = os.path.join(save_dir, f"owlvit-base-patch32.csv")
+    new_df_path = os.path.join(save_dir, f"owlvit-base-patch32_trigger_handle.csv")
     if os.path.exists(new_df_path):
         df = pd.read_csv(new_df_path, sep=';', encoding='utf-8')
         print(df.columns)
@@ -37,10 +37,10 @@ def run_owl(experiment, ground_truth_csv, iou_tolerance = None):
                 #tried using pillow but it looks like max set it up for tensors so converted to img tensor
                 if 'index' in str(row['annotation_type']):
                     # noun = ['trigger']
-                    noun = ['press']
+                    noun = ['trigger']
                 else:
                     # noun = ['handle']
-                    noun = ['grasp']
+                    noun = ['handle']
                 bboxs = experiment.predict(tensor_img, noun)
                 print(bboxs)
                 best_box = bboxs[noun[0]]['boxes'][torch.argmax(bboxs[noun[0]]['scores'])]
