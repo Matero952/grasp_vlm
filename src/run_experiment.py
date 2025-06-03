@@ -21,6 +21,8 @@ def run_owl(experiment, ground_truth_csv, iou_tolerance = None):
     new_df_path = os.path.join(save_dir, f"owlvit-base-patch32.csv")
     if os.path.exists(new_df_path):
         df = pd.read_csv(new_df_path, sep=';', encoding='utf-8')
+        print(df.columns)
+        breakpoint()
     else:
         df = pd.DataFrame(columns=["img_id", "img_path", "pred_bbox", "noun", "target_bbox", "iou"])
     with open(ground_truth_csv) as f:
@@ -34,20 +36,21 @@ def run_owl(experiment, ground_truth_csv, iou_tolerance = None):
                 print(f"TENSOR IMG SHAPE: {tensor_img.shape}") 
                 #tried using pillow but it looks like max set it up for tensors so converted to img tensor
                 if 'index' in str(row['annotation_type']):
-                    noun = ['trigger']
+                    # noun = ['trigger']
+                    noun = ['button to press with index finger']
                 else:
-                    noun = ['handle']
+                    # noun = ['handle']
+                    noun = ['graspable handle']
                 bboxs = experiment.predict(tensor_img, noun)
                 print(bboxs)
                 best_box = bboxs[noun[0]]['boxes'][torch.argmax(bboxs[noun[0]]['scores'])]
                 print(f'{best_box=}')
                 print(f'{ast.literal_eval(row['bbox'])=}')
-                breakpoint()
                 best_box = best_box.tolist()
                 iou = get_iou(best_box, ast.literal_eval(row['bbox']))
                 print(iou)
-                breakpoint()
-                # df.loc[len(df)] = [row['img_id'], row['img_path'], sanitize_text(clean_text(str(best_box))), noun[0], row['bbox']]
+                df.loc[int(row['img_id'])] = [row['img_id'], row['img_path'], str(best_box).strip(), noun[0], row['bbox'], iou]
+                df.to_csv(new_df_path, sep=';', encoding='utf-8', index=False)
                 # reformatted = reformat_owl(best_box)
                 #not going to reformat because ground_truth_owl.csv is already in owls format
 

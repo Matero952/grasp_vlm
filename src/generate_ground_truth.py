@@ -37,6 +37,7 @@ def generate_ground_truth(json_dir, output_dir):
                 top_left_y = int(img['height']) - (bbox_info['bbox'][1] + bbox_info['bbox'][3])
                 bot_right_x = bbox_info['bbox'][0] + bbox_info['bbox'][2]
                 bot_right_y = int(img['height']) - (bbox_info['bbox'][1])
+                #Owls image coordinates are not in standard cartesian
                 bbox_dim = [top_left_x, top_left_y, bot_right_x, bot_right_y]
             else:
                 bbox_x1 = bbox_info['bbox'][0]

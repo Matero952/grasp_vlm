@@ -85,9 +85,6 @@ class OWLv2:
 
 
         results = self.processor.post_process_grounded_object_detection(outputs=outputs, target_sizes=target_sizes, threshold=0)[0]
-        print(f"{results=}")
-        print(f'Goon')
-        breakpoint()
         label_lookup = {i: label for i, label in enumerate(querries)}
         all_labels = results["labels"]
         all_boxes = results["boxes"]
