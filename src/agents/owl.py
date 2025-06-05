@@ -13,10 +13,7 @@ import sys
 dir_path = os.path.dirname(os.path.abspath(__file__))
 if dir_path not in sys.path:
     sys.path.insert(0, dir_path)
-from utils import get_points_and_colors, nms
-
-
-
+    
 _script_dir = os.path.dirname(os.path.realpath(__file__))
 _config_path = os.path.join(_script_dir, 'config.json')
 fig_dir = os.path.join(_script_dir, 'figures')

@@ -78,6 +78,29 @@ class GrokExperiment(VisionExperiment):
             # temperature=0.01,
         )
         return completion.choices[0].message.content
+    
+class GPTExperiment(VisionExperiment):
+    def __init__(self, model, prompt_func):
+        super().__init__(model, prompt_func)
+        self.client = OpenAI(api_key=os.getenv('GPT'))
+    def process_sample(self, img_path, tool, annotation_type):
+        converted_img_data, mime_type = self.convert_to_base64(img_path=img_path)
+        response = self.client.responses.create(
+            model=self.model,
+            input=[
+                    {
+                        "role": "user",
+                        "content": [
+                            { "type": "input_text", "text": self.prompt_func(tool, annotation_type) },
+                            {
+                                "type": "input_image",
+                                "image_url": f"data:image/jpeg;base64,{converted_img_data}",
+                            },
+                        ],
+                    }
+                ],
+        )
+        return response.output_text
 if __name__ == "__main__":
-    print(os.getenv('GROK'))
+    print(os.getenv('GPT'))
         
