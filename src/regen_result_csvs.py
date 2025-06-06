@@ -28,6 +28,8 @@ def reform(txt_file, ground_truth='src/ground_truth.csv'):
     elif 'grok' in txt_file:
         # responses = split_by_custom_delim(txt_file, r'To determine')
         responses = split_by_indentation(txt_file)
+    else:
+        responses = split_by_indentation(txt_file)
     print(f"len responses: {len(responses)}")
     print(f'0: {responses[0]}')
     print(f"-1: {responses[-1]}")
@@ -95,6 +97,7 @@ def split_by_indentation(filename):
     
     with open(filename, 'r', encoding='utf-8') as f:
         for line in f:
+            line = sanitize_text(clean_text(line))
             indent = len(line) - len(line.lstrip('\t '))
             if indent == 0 and current_block:
                 responses.append(''.join(current_block).rstrip())
@@ -194,7 +197,7 @@ def pls_grok(txt_file):
     print(counter)
 
 # print(len(get_bnd_boxes(split_by_indentation('results/raw_text/grok-2-vision-1212/grok-2-vision-1212.txt'))))
-reform('results/raw_text/gemini-2.5-flash-preview-05-20-reasoning/gemini-2.5-flash-preview-05-20-reasoning.txt')
+reform('results/raw_text/o4-mini_reasoning/o4-mini_reasoning.txt')
 # pls_grok('results/raw_text/grok-2-vision-1212-reasoning/grok-2-vision-1212-reasoning.txt')
 # split_by_custom_delim('results/raw_text/claude-3-5-haiku-latest-reasoning/claude-3-5-haiku-latest-reasoning.txt', r'"""\n|I apologize')
 # check('output.csv')
