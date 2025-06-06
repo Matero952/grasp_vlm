@@ -12,3 +12,4 @@ results/raw_text_outputs
 results/old
 results/old_gemini
 .vscode
+data/old

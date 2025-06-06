@@ -1,0 +1,134 @@
+Max for grab on the screwdriver_yolo_large: 0.5466387751652049. Image: 62
+Max for button on the glue gun tool_yolo_large: 0.1005662312039892 Image: 46
+Max for handle to grasp with four fingers on the screwdriver_yolo_large: 0.5466387751652049. Image: 62
+Max for trigger to press with index finger on the glue gun tool_yolo_large: 0.0347323544776807 Image: 94
+Max for place to grip with entire hand on the screwdriver_yolo_medium: 0.5660650663246327. Image: 34
+Max for place to put index finger on the glue gun tool_yolo_medium: 0.3792853806134239 Image: 18
+Max for place for hand to wrap around on the screwdriver_yolo_small: 0.6385973066693629. Image: 44
+Max for place to press with index finger pad on the glue gun tool_yolo_small: 0.2099229704816899 Image: 76
+Max for handle on the screwdriver_yolo_medium: 0.4661020900181278. Image: 54
+Max for trigger on the glue gun tool_yolo_medium: 0.2517433025903802 Image: 63
+Max for place for hand to wrap around on the screwdriver_yolo_large: 0.5631492510301185. Image: 34
+Max for place to press with index finger pad on the glue gun tool_yolo_large: 0.0604548373306109 Image: 44
+Max for handle to grasp with four fingers on the screwdriver_yolo_medium: 0.5660650663246327. Image: 34
+Max for trigger to press with index finger on the glue gun tool_yolo_medium: 0.2159797349088106 Image: 97
+Max for grab on the screwdriver_yolo_small: 0.6385973066693629. Image: 44
+Max for button on the glue gun tool_yolo_small: 0.2099229704816899 Image: 76
+Max for grasp on the screwdriver_yolo_medium: 0.415806232343939. Image: 69
+Max for press on the glue gun tool_yolo_medium: 0.0486020102121794 Image: 66
+Max for grasping area placement on the screwdriver_yolo_medium: 0.5233873028827605. Image: 36
+Max for index finger placement on the glue gun tool_yolo_medium: 0.2517433025903802 Image: 63
+Max for hold on the screwdriver_yolo_medium: 0.5233873028827605. Image: 36
+Max for toggle on the glue gun tool_yolo_medium: 0.2159797349088106 Image: 97
+Max for handle on the screwdriver_yolo_small: 0.6385973066693629. Image: 44
+Max for trigger on the glue gun tool_yolo_small: 0.0397912748527451 Image: 66
+Max for graspable handle on the screwdriver_yolo_medium: 0.5233873028827605. Image: 36
+Max for button to press with index finger on the glue gun tool_yolo_medium: 0.0849320949546372 Image: 89
+Max for place to grab with four fingers on the screwdriver_yolo_small: 0.6385973066693629. Image: 44
+Max for place to put pad of index finger on the glue gun tool_yolo_small: 0.2099229704816899 Image: 76
+Max for grip on the screwdriver_yolo_small: 0.6385973066693629. Image: 44
+Max for lever on the glue gun tool_yolo_small: 0.2079176221005024 Image: 47
+Max for grip on the screwdriver_yolo_medium: 0.5233873028827605. Image: 36
+Max for lever on the glue gun tool_yolo_medium: 0.2517433025903802 Image: 63
+Max for graspable handle on the screwdriver_yolo_large: 0.5466387751652049. Image: 62
+Max for button to press with index finger on the glue gun tool_yolo_large: 0.2095757868998905 Image: 94
+Max for area to grab safely with entire hand on the screwdriver_yolo_medium: 0.5660650663246327. Image: 34
+Max for pressable surface for index finger on the glue gun tool_yolo_medium: 0.2517433025903802 Image: 63
+Max for grab on the screwdriver_yolo_medium: 0.415806232343939. Image: 69
+Max for button on the glue gun tool_yolo_medium: 0.2622262882623736 Image: 64
+Max for area to grab safely with entire hand on the screwdriver_yolo_large: 0.5631492510301185. Image: 34
+Max for pressable surface for index finger on the glue gun tool_yolo_large: 0.2537825557822428 Image: 63
+Max for place to grab with four fingers on the screwdriver_yolo_medium: 0.5660650663246327. Image: 34
+Max for place to put pad of index finger on the glue gun tool_yolo_medium: 0.3792853806134239 Image: 18
+Max for place to grip with entire hand on the screwdriver_yolo_large: 0.5631492510301185. Image: 34
+Max for place to put index finger on the glue gun tool_yolo_large: 0.1526216272349668 Image: 44
+Max for place for hand to wrap around on the screwdriver_yolo_medium: 0.5660650663246327. Image: 34
+Max for place to press with index finger pad on the glue gun tool_yolo_medium: 0.2517433025903802 Image: 63
+Max for grasp on the screwdriver_yolo_small: 0.6385973066693629. Image: 44
+Max for press on the glue gun tool_yolo_small: 0.0397912748527451 Image: 66
+Max for hold on the screwdriver_yolo_large: 0.5631492510301185. Image: 34
+Max for toggle on the glue gun tool_yolo_large: 0.3416214543198308 Image: 22
+Max for grasp on the screwdriver_yolo_large: 0.5631492510301185. Image: 34
+Max for press on the glue gun tool_yolo_large: 0.0347323544776807 Image: 94
+Max for bar on the screwdriver_yolo_small: 0.5532786246912721. Image: 34
+Max for switch on the glue gun tool_yolo_small: 0.0397912748527451 Image: 66
+Max for handle on the screwdriver_yolo_large: 0.5466387751652049. Image: 62
+Max for trigger on the glue gun tool_yolo_large: 0.1233504931014712 Image: 97
+Max for bar on the screwdriver_yolo_large: 0.5631492510301185. Image: 34
+Max for switch on the glue gun tool_yolo_large: 0.1233504931014712 Image: 97
+Max for grasping area placement on the screwdriver_yolo_small: 0.6385973066693629. Image: 44
+Max for index finger placement on the glue gun tool_yolo_small: 0.2099229704816899 Image: 76
+Max for hold on the screwdriver_yolo_small: 0.6385973066693629. Image: 44
+Max for toggle on the glue gun tool_yolo_small: 0.2079176221005024 Image: 47
+Max for grasping area placement on the screwdriver_yolo_large: 0.5631492510301185. Image: 34
+Max for index finger placement on the glue gun tool_yolo_large: 0.2537825557822428 Image: 63
+Max for graspable handle on the screwdriver_yolo_small: 0.6385973066693629. Image: 44
+Max for button to press with index finger on the glue gun tool_yolo_small: 0.2528671433201079 Image: 63
+Max for place to grip with entire hand on the screwdriver_yolo_small: 0.6385973066693629. Image: 44
+Max for place to put index finger on the glue gun tool_yolo_small: 0.2099229704816899 Image: 76
+Max for handle to grasp with four fingers on the screwdriver_yolo_small: 0.6385973066693629. Image: 44
+Max for trigger to press with index finger on the glue gun tool_yolo_small: 0.2079176221005024 Image: 47
+Max for area to grab safely with entire hand on the screwdriver_yolo_small: 0.6385973066693629. Image: 44
+Max for pressable surface for index finger on the glue gun tool_yolo_small: 0.2099229704816899 Image: 76
+Max for place to grab with four fingers on the screwdriver_yolo_large: 0.5631492510301185. Image: 34
+Max for place to put pad of index finger on the glue gun tool_yolo_large: 0.3844394946345419 Image: 18
+Max for grip on the screwdriver_yolo_large: 0.5631492510301185. Image: 34
+Max for lever on the glue gun tool_yolo_large: 0.1526216272349668 Image: 44
+Max for bar on the screwdriver_yolo_medium: 0.5660650663246327. Image: 34
+Max for switch on the glue gun tool_yolo_medium: 0.0791075629360789 Image: 67
+Max for grab on the screwdriver: 0.5651512743491455. Image: 34
+Max for button on the glue gun tool: 0.0348866211472208 Image: 94
+Max for bar on the screwdriver: 0.5651512743491455. Image: 34
+Max for switch on the glue gun tool: 0.0348866211472208 Image: 94
+Max for graspable handle on the screwdriver: 0.5651512743491455. Image: 34
+Max for button to press with index finger on the glue gun tool: 0.0348866211472208 Image: 94
+Max for grasp on the screwdriver: 0.5651512743491455. Image: 34
+Max for press on the glue gun tool: 0.0348866211472208 Image: 94
+Max for place to grab with four fingers on the screwdriver: 0.5651512743491455. Image: 34
+Max for place to put pad of index finger on the glue gun tool: 0.0348866211472208 Image: 94
+Max for place to grip with entire hand on the screwdriver: 0.5651512743491455. Image: 34
+Max for place to put index finger on the glue gun tool: 0.0348866211472208 Image: 94
+Max for handle to grasp with four fingers on the screwdriver: 0.5651512743491455. Image: 34
+Max for trigger to press with index finger on the glue gun tool: 0.0348866211472208 Image: 94
+Max for handle on the screwdriver: 0.5651512743491455. Image: 34
+Max for trigger on the glue gun tool: 0.0348866211472208 Image: 94
+Max for place for hand to wrap around on the screwdriver: 0.671395074232096. Image: 47
+Max for place to press with index finger pad on the glue gun tool: 0.0348866211472208 Image: 94
+Max for hold on the screwdriver: 0.5651512743491455. Image: 34
+Max for toggle on the glue gun tool: 0.0348866211472208 Image: 94
+Max for area to grab safely with entire hand on the screwdriver: 0.5651512743491455. Image: 34
+Max for pressable surface for index finger on the glue gun tool: 0.0348866211472208 Image: 94
+Max for grip on the screwdriver: 0.5651512743491455. Image: 34
+Max for lever on the glue gun tool: 0.0348866211472208 Image: 94
+Max for grasping area placement on the screwdriver: 0.5651512743491455. Image: 34
+Max for index finger placement on the glue gun tool: 0.0348866211472208 Image: 94
+Max for place for hand to wrap around: 0.6736373188166048. Image: 47
+Max for place to press with index finger pad: 0.162834624685514 Image: 97
+Max for handle to grasp with four fingers: 0.5752895257544111. Image: 57
+Max for trigger to press with index finger: 0.0348573000719145 Image: 94
+Max for area to grab safely with entire hand: 0.4142963416669135. Image: 69
+Max for pressable surface for index finger: 0.1016320479712034 Image: 67
+Max for grasping area placement: 0.6736373188166048. Image: 47
+Max for index finger placement: 0.3627382505135637 Image: 18
+Max for place to grip with entire hand: 0.6736373188166048. Image: 47
+Max for place to put index finger: 0.3627382505135637 Image: 18
+Max for graspable handle: 0.6736373188166048. Image: 47
+Max for button to press with index finger: 0.0348573000719145 Image: 94
+Max for place to grab with four fingers: 0.6736373188166048. Image: 47
+Max for place to put pad of index finger: 0.3627382505135637 Image: 18
+Max for grab: 0.5731151197860136. Image: 34
+Max for button: 0.0348573000719145 Image: 94
+Max for grip: 0.6736373188166048. Image: 47
+Max for lever: 0.1226900190175561 Image: 46
+Max for handle: 0.6736373188166048. Image: 47
+Max for trigger: 0.2802124877657086 Image: 61
+Max for bar: 0.5645638743698066. Image: 34
+Max for switch: 0.0348573000719145 Image: 94
+Max for hold: 0.5731151197860136. Image: 34
+Max for toggle: 0.0525040872675161 Image: 46
+Max for grasp: 0.5752895257544111. Image: 57
+Max for press: 0.0348573000719145 Image: 94
+> /home/mateo/Github/grasp_vlm/src/graph.py(192)get_owl_single()
+-> breakpoint()
+(Pdb) --KeyboardInterrupt--
+(Pdb) 

@@ -10,31 +10,35 @@ import math
 from itertools import cycle
 import ast
 import os
+import numpy as np
+from pathlib import Path
 matplotlib.use('AGG')
 tool_dict = {'drill' : 'drill', 'wacker' : 'weed_wacker', 'glue' : 'glue_gun', 'saw' : 'circular_saw', 'nail' : 'nail_gun', 
     'screwdriver' : 'screwdriver', 'wrench' : 'wrench', 'solder' : 'solder_iron', 'allen' : 'allen_key', 'hammer' : 'hammer'}
-models_regex = r"claude-3-5-haiku-latest|claude-3-haiku-20240307|gemini-1.5-flash|gemini-2.0-flash|gemini-2.0-flash-lite|gemini-2.5-flash-preview-05-20|grok-2-vision-1212"
+models_regex = r"claude-3-5-haiku-latest|claude-3-haiku-20240307|gemini-1.5-flash|gemini-2.0-flash|gemini-2.0-flash-lite|gemini-2.5-flash-preview-05-20|grok-2-vision-1212|gpt-4.1-mini|gpt-4.1-nano|gpt-4o-mini|o4-mini"
 
 def plot_box_and_whiskers(iou_dict: dict):
     df = pd.DataFrame(iou_dict)
     print(df)
+    breakpoint()
+    print(df)
     df = df.melt(var_name="Noun", value_name="IoU")
-    plt.figure(figsize=(16, 15))
+    plt.figure(figsize=(30, 25))
     sns.boxplot(x = 'IoU', y = 'Noun', data=df)
     plt.xticks(rotation=45, ha="right")
     plt.yticks(fontsize=10)
     plt.xticks(fontsize=10)
     plt.xlabel('Iou', fontsize=20)
     plt.ylabel('Noun', fontsize=20)
-    plt.title('Boxplot of IoUs for Owl', fontsize=25)
+    plt.title('Boxplot of IoUs for Owl and YOLO', fontsize=25)
     plt.tight_layout()
     plt.show()
-    plt.savefig('src/iou_boxplt_owl_experiment_1.png')
+    plt.savefig('src/iou_boxplt_t.png')
 
 def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv'):
     df = pd.read_csv(csv_path, sep=';', encoding='utf-8')
     gt = pd.read_csv(gt_file, sep=';', encoding='utf-8')
-    df.columns = df.columns.str.replace('"', '', regex=False)
+    df.columns = df.columns.str.replace('"', '', regex=False).str.strip()
     gt.columns = gt.columns.str.replace('"', '', regex=False)
     img_paths_by_tool = get_img_paths_by_tool(gt_file)
     amount_per_tool = numb_of_imgs // 10
@@ -52,28 +56,12 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv')
     while counter < numb_of_imgs:
         key = next(key_cycle)
         path = img_paths_by_tool[key][index]
-
         if key == keys[-1]:
             index += 1
         imgs.append(path)
         counter += 1
     print(imgs)
     print(len((imgs)))
-    # for i in range(len(img_paths_by_tool.keys())):
-    #     key = next(key_cycle)
-    #     values = img_paths_by_tool[key][:amount_per_tool]
-    #     for i in values:
-    #         imgs_1.append(i)
-
-    # for j in range(left_over):
-    #     key = next(key_cycle)
-    #     imgs_1.append(img_paths_by_tool[key][len(img_paths_by_tool.keys()) + 1])
-
-    # if imgs_1 == imgs:
-    #     print(True)
-    # else:
-    #     print(False)
-    #check for repeats
     for idx, i in enumerate(imgs):
         if i in imgs[idx+1:]:
             print(i)
@@ -131,7 +119,9 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv')
     plt.show()
     plt.savefig(f'results/{model_name}_prediction_grid.png')
 
-def get_owl_single(csv_list, gt_path):
+def get_owl_single(gt_path):
+    owl_yolo_csv_list = []
+    # rest_list = []
     ious = {}
     gt = pd.read_csv(gt_path, delimiter=';', encoding='utf-8')
     gt.columns = gt.columns.str.replace('"', '', regex=False)
@@ -139,87 +129,79 @@ def get_owl_single(csv_list, gt_path):
     finger_regex = r'button|lever|switch|press|toggle|trigger'
     hand = ['grab', 'grip', 'grasp', 'bar', 'hold', 'handle']
     finger = ['button', 'lever', 'switch', 'press', 'toggle', 'trigger']
-
-    for path in csv_list:
+    def_path = Path('results')
+    for i in def_path.rglob('*.csv'):
+        # print(str(i))
+        if 'owl' in str(i) or 'yolo' in str(i):
+            # print(str(i))
+            owl_yolo_csv_list.append(str(i))
+        else:
+            # rest_list.append(str(i))
+            continue
+    # print(csv_list)
+    for path in owl_yolo_csv_list:
         hand_ious = []
         finger_ious = []
         df = pd.read_csv(path, delimiter=';', encoding='utf-8')
         df.columns = df.columns.str.replace('"', '', regex=False)
-        if 'description_owl' in path:
-            for index, row in df.iterrows():
-                to_check_row = gt[gt['img_id'] == row['img_id']]
-                # print(to_check_row['annotation_type'])
-                # print('ppa') if 'index' in to_check_row['annotation_type'].loc[0] else 'caca'
-                # print('pp') if 'four' in to_check_row['annotation_type'].loc[0] else 'cc'
-                # breakpoint()
-                try:
-                    print(to_check_row['annotation_type'].loc[0])
-                except KeyError:
-                    print(to_check_row['annotation_type'])
-                print(f"AAAA")
-                print(f"AA")
-                try:
-                    if 'index' in to_check_row['annotation_type'].iloc[0]:
-                        finger_ious.append(float(row['iou']))
-                    elif 'four' in to_check_row['annotation_type'].iloc[0]:
-                        hand_ious.append(float(row['iou']))
-                    else:
-                        print(f"Nu bueno")
-                        print(to_check_row)
-                        breakpoint()
-                except KeyError:
-                    if 'index' in to_check_row['annotation_type']:
-                        finger_ious.append(float(row['iou']))
-                    elif 'four' in to_check_row['annotation_type']:
-                        hand_ious.append(float(row['iou']))
-                    else:
-                        print(f"Nu obueno")
-                        print(to_check_row)
-                        breakpoint()
-
-            to_check_row_hand = df[df['img_id'] == 0]
-            to_check_row_index = df[df['img_id'] == 1]
-            print(to_check_row)
-            ious[to_check_row_hand['noun'].iloc[0]] = hand_ious
-            ious[to_check_row_index['noun'].iloc[0]] = finger_ious
-        else:
-            for index, row in df.iterrows():
-                if row['noun'] in hand:
-                    hand_ious.append(float(row['iou']))
-                elif row['noun'] in finger:
-                    finger_ious.append(float(row['iou']))
-                else:
-                    print(f"No recognized noun detected")
-                    print(f"{row['noun']=}")
-                    breakpoint()
-            hand_match = re.search(hand_regex, path)
-            finger_match = re.search(finger_regex, path)
-            if hand_match and finger_match:
-                ious[hand_match.group(0)] = hand_ious
-                ious[finger_match.group(0)] = finger_ious
-            else: 
-                print('Uh no bueno')
+        # print(df.columns)
+        # for col in df.columns:
+        #     print(f'{repr(col)=}')
+        for index, row in df.iterrows():
+            to_check_row = gt[gt['img_id'] == row['img_id']]
+            if 'index' in to_check_row['annotation_type'].iloc[0]:
+                finger_ious.append(float(row['iou']))
+            elif 'four' in to_check_row['annotation_type'].iloc[0]:
+                hand_ious.append(float(row['iou']))
+            else:
+                print(f"Nu bueno")
+                print(to_check_row)
                 breakpoint()
-    print(ious)
+        to_check_row_hand = df[df['img_id'] == 0]
+        to_check_row_index = df[df['img_id'] == 1]
+        # print(to_check_row)
+        if 'yolo' in path:
+            if '_l_' in path:
+                suffix = '_yolo_large'
+            elif '_m_' in path:
+                suffix = '_yolo_medium'
+            else:
+                suffix = '_yolo_small'
+        else:
+            suffix = ''
+        to_check_row = gt[gt['img_id'] == row['img_id']]
+        prompt_hand = (to_check_row_hand['noun'].iloc[0]).replace(']', '').replace('[', '').replace("'", '')
+        prompt_index = (to_check_row_index['noun'].iloc[0]).replace(']', '').replace('[', '').replace("'", '')
+        ious[f'{prompt_hand}{suffix}'] = hand_ious
+        ious[f'{prompt_index}{suffix}'] = finger_ious
+        
+        print(f"Max for {prompt_hand}{suffix}: {max(hand_ious)}. Image: {np.argmax(hand_ious)}") 
+        print(f"Max for {prompt_index}{suffix}: {max(finger_ious)} Image: {np.argmax(finger_ious)}")
+    breakpoint()
     return ious
 
-            
 
 def get_ious(csv_list):
     ious = {}
     for path in csv_list:
-        df = pd.read_csv(path, delimiter=';')
-        #I decided to change the delimiter to semicolon as none of the vlm resposnes used it and it looks a little bit cleaner in my opinion.
-        df.columns = df.columns.str.replace('"', '', regex=False)
+        iou_list = []
+        df = pd.read_csv(path, delimiter=';', encoding='utf-8')
+        # I decided to change the delimiter to semicolon as none of the vlm responses used it 
+        # and it looks a little bit cleaner in my opinion.
+        df.columns = df.columns.str.replace('"', '', regex=False).str.strip()
+        print("Columns:", df.columns.tolist())
+        print("DataFrame shape:", df.shape)
         model_match = re.search(models_regex, path)
-        if model_match:
-            if 'reason' in path:
-                model_name = f"{model_match.group(0)}_reasoning"
-            else:
-                model_name = model_match.group(0)
-            ious[model_name] = [float(i) for i in df['iou'].to_list()]
+        for index, row in df.iterrows():
+            iou_list.append(row['iou'])
+        if 'reason' in path:
+            model_name = f"{model_match.group(0)}_reasoning"
         else:
-            breakpoint()
+            model_name = model_match.group(0)
+        ious[model_name] = iou_list
+    
+    print(ious)
+    # print(len(gg))
     return ious
 
 def get_img_paths_by_tool(csv_path):
@@ -239,19 +221,23 @@ def get_img_paths_by_tool(csv_path):
 
 
 if __name__ == "__main__":
-    plot_box_and_whiskers(get_owl_single(['results/single_word_owl/owlvit-base-patch32_button_grab.csv', 'results/single_word_owl/owlvit-base-patch32_lever_grip.csv'
-                                    , 'results/single_word_owl/owlvit-base-patch32_press_grasp.csv', 'results/single_word_owl/owlvit-base-patch32_switch_bar.csv',
-                                    'results/single_word_owl/owlvit-base-patch32_toggle_hold.csv', 'results/single_word_owl/owlvit-base-patch32_trigger_handle.csv', 
-                                    'results/description_owl/owlvit-base-patch32_1.csv', 'results/description_owl/owlvit-base-patch32_2.csv',
-                                    'results/description_owl/owlvit-base-patch32_3.csv', 'results/description_owl/owlvit-base-patch32_4.csv',
-                                    'results/description_owl/owlvit-base-patch32_5.csv', 'results/description_owl/owlvit-base-patch32_6.csv',
-                                    'results/description_owl/owlvit-base-patch32_7.csv',], 'src/ground_truth_owl.csv'))
+    # plot_box_and_whiskers(get_owl_single('src/ground_truth_owl.csv'))
+    # print(len(['results/claude-3-5-haiku-latest-reasoning_reason.csv', 'results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307-reasoning_reason.csv', 
+    #                 'results/claude-3-haiku-20240307.csv', 'results/gemini-1.5-flash-reasoning.csv', 'results/gemini-1.5-flash.csv', 'results/gemini-2.0-flash-lite-reasoning.csv',
+    #                 'results/gemini-2.0-flash-lite.csv', 'results/gemini-2.0-flash-reasoning_reason.csv', 'results/gemini-2.0-flash.csv', 'results/gemini-2.5-flash-preview-05-20-reasoning.csv',
+    #                 'results/gemini-2.5-flash-preview-05-20.csv', 'results/grok-2-vision-1212-reasoning_reason.csv', 'results/grok-2-vision-1212.csv', 'results/gpt-4.1-mini_reasoning.csv',
+    #                 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano_reasoning.csv', 'results/gpt-4.1-nano.csv', 'results/gpt-4o-mini_reasoning.csv', 'results/gpt-4o-mini.csv',
+    #                 'results/o4-mini_reasoning.csv', 'results/o4-mini.csv'
+    #                 ]))
+    # breakpoint()
     # plot_box_and_whiskers(get_ious(['results/claude-3-5-haiku-latest-reasoning_reason.csv', 'results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307-reasoning_reason.csv', 
     #                 'results/claude-3-haiku-20240307.csv', 'results/gemini-1.5-flash-reasoning.csv', 'results/gemini-1.5-flash.csv', 'results/gemini-2.0-flash-lite-reasoning.csv',
     #                 'results/gemini-2.0-flash-lite.csv', 'results/gemini-2.0-flash-reasoning_reason.csv', 'results/gemini-2.0-flash.csv', 'results/gemini-2.5-flash-preview-05-20-reasoning.csv',
-    #                 'results/gemini-2.5-flash-preview-05-20.csv', 'results/grok-2-vision-1212-reasoning_reason.csv', 'results/grok-2-vision-1212.csv'
+    #                 'results/gemini-2.5-flash-preview-05-20.csv', 'results/grok-2-vision-1212-reasoning_reason.csv', 'results/grok-2-vision-1212.csv', 'results/gpt-4.1-mini_reasoning.csv',
+    #                 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano_reasoning.csv', 'results/gpt-4.1-nano.csv', 'results/gpt-4o-mini_reasoning.csv', 'results/gpt-4o-mini.csv',
+    #                 'results/o4-mini_reasoning.csv', 'results/o4-mini.csv'
     #                 ]))
-    # plot_prediction_grid('results/gemini-2.5-flash-preview-05-20.csv', 64)
+    plot_prediction_grid('results/o4-mini.csv', 64)
     # get_img_paths_by_tool('src/ground_truth.csv')
 
 
