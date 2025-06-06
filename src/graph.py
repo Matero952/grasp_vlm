@@ -29,7 +29,7 @@ def plot_box_and_whiskers(iou_dict: dict):
     plt.title('Boxplot of IoUs for Owl', fontsize=25)
     plt.tight_layout()
     plt.show()
-    plt.savefig('src/iou_boxplt_owl.png')
+    plt.savefig('src/iou_boxplt_owl_experiment_1.png')
 
 def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv'):
     df = pd.read_csv(csv_path, sep=';', encoding='utf-8')

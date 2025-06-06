@@ -1,5 +1,6 @@
 from agents.claude_grok import ClaudeExperiment, GrokExperiment
 from agents.gemini import GeminiExperiment
+from agents.claude_grok import GPTExperiment
 from prompt import *
 from prompt import generate_prompt
 import os
@@ -14,61 +15,110 @@ from PIL import Image
 import torchvision.transforms as T
 import cv2
 import numpy as np
-def run_owl(experiment, ground_truth_csv, iou_tolerance = None):
-    os.makedirs("results", exist_ok=True)
-    save_dir = os.path.join("results", 'owlvit-base-patch32')
-    os.makedirs(save_dir, exist_ok=True)
-    new_df_path = os.path.join(save_dir, f"owlvit-base-patch32_trigger_handle.csv")
-    if os.path.exists(new_df_path):
-        df = pd.read_csv(new_df_path, sep=';', encoding='utf-8')
-        print(df.columns)
-        breakpoint()
-    else:
-        df = pd.DataFrame(columns=["img_id", "img_path", "pred_bbox", "noun", "target_bbox", "iou"])
-    with open(ground_truth_csv) as f:
-        reader = csv.DictReader(f, delimiter=';')
-        for row in reader:
-            if str(row['img_id']) in df['img_id'].astype(str).values:
-                print(f"Skipping: {str(row['img_id'])}")
-            else:
+from graph import plot_box_and_whiskers, get_owl_single
+from pathlib import Path
+#Allen key ===> Allen wrench tool(allen wrench tool)
+#Drill ===> Drill tool/power tool(tool)
+#Glue gun ===> Glue gun(glue gun tool/tool)
+#Hammer ===> Hammer construction tool(hammer/tool)
+#Nail gun ===> Nail gun/nail gun construction tool(nail gun/tool)
+#Wrench ===> Wrench/wrench tool(or just tool)
+#Circular saw ===> Circular saw
+tool_dict_for_yolo_1 = {'drill' : 'drill tool', 'wacker' : 'weed wacker', 'glue' : 'glue gun tool', 'saw' : 'circular saw', 'nail' : 'nail gun', 
+    'screwdriver' : 'screwdriver', 'wrench' : 'wrench tool', 'solder' : 'solder iron tool', 'allen' : 'allen wrench tool', 'hammer' : 'hammer'}
+tool_regex = r'drill|wacker|glue|saw|nail|screwdriver|wrench|solder|allen|hammer'
+
+def generate_owl_prompts(base_directory):
+    #generates owl prompts from old results
+    owl_paths = []
+    prompts = []
+    
+    path = Path(base_directory)
+    for i in path.rglob('*.csv'):
+        print(str(i))
+        if 'owl' in str(i):
+            print(str(i))
+            owl_paths.append(str(i))
+        else:
+            continue
+    assert len(owl_paths) == 13
+    for i in owl_paths:
+        assert isinstance(i, str)
+        df = pd.read_csv(i, sep=';', encoding='utf-8')
+        df.columns = df.columns.str.replace('"', '', regex=False)
+        to_check_row_hand = df.iloc[0]
+        to_check_row_index = df.iloc[1]
+        hand_prompt = to_check_row_hand['noun']
+        index_prompt = to_check_row_index['noun']
+        prompts.append((index_prompt, hand_prompt))
+    print(prompts)
+    return prompts
+
+def run_owl_experiments(experiment, ground_truth_csv, prompt_base_dir = 'results'):
+    prompts = generate_owl_prompts(prompt_base_dir)
+    breakpoint()
+    print(f"Starting OWL experiments for {prompts=}")
+    counter = 0
+    completed_experiment_list = []
+    for i in prompts:
+        os.makedirs('results', exist_ok=True)
+        save_dir = os.path.join("results", 'owl')
+        os.makedirs(save_dir, exist_ok=True)
+        new_df_path = os.path.join(save_dir, f"owlvit-base-patch32_{counter}.csv")
+        df = pd.DataFrame(columns=['img_id', 'img_path', 'pred_bbox', 'noun', 'target_bbox', 'iou'])
+        df.columns = df.columns.str.replace('"', '', regex=False)
+        with open(ground_truth_csv) as f:
+            reader = csv.DictReader(f, delimiter=';')
+            # reader.fieldnames = [name.strip() for name in reader.fieldnames]
+            for row in reader:
+                # print(row.keys())
+                # breakpoint()
+                # if 'img_path' in row.keys():
+                #     print('AAAAAAAAA')
+                # print(row['img_path'])
+                # for col in df.columns:
+                #     print(repr(list(col)))
+                # print(row)
                 img = Image.open(str(row['img_path']))
-                tensor_img = T.ToTensor()(img) 
-                print(f"TENSOR IMG SHAPE: {tensor_img.shape}") 
-                #tried using pillow but it looks like max set it up for tensors so converted to img tensor
-                if 'index' in str(row['annotation_type']):
-                    # noun = ['trigger']
-                    noun = ['trigger']
+                img = T.ToTensor()(img)
+                prompt_index, prompt_hand = i
+                tool_match = re.search(tool_regex, row['img_path'])
+                if tool_match:
+                    tool = tool_match.group(0)
                 else:
-                    # noun = ['handle']
-                    noun = ['handle']
-                bboxs = experiment.predict(tensor_img, noun)
-                print(bboxs)
-                best_box = bboxs[noun[0]]['boxes'][torch.argmax(bboxs[noun[0]]['scores'])]
-                print(f'{best_box=}')
-                print(f'{ast.literal_eval(row['bbox'])=}')
+                    raise ValueError('No tool found in the image path.')
+                if 'index' in str(row['annotation_type']):
+                    prompt = f"{prompt_index} on the {tool_dict_for_yolo_1[tool]}"
+                elif 'four' in str(row['annotation_type']):
+                    prompt = f"{prompt_hand} on the {tool_dict_for_yolo_1[tool]}"
+                else:
+                    raise ValueError('No recognized annotation type')
+                print(f'{prompt=}')
+                prompt = [f'{prompt}']
+                bboxs = experiment.predict(img, prompt)
+                print(f'{bboxs=}')
+                best_box = bboxs[prompt[0]]['boxes'][torch.argmax(bboxs[prompt[0]]['scores'])]
                 best_box = best_box.tolist()
                 iou = get_iou(best_box, ast.literal_eval(row['bbox']))
-                print(iou)
-                df.loc[int(row['img_id'])] = [row['img_id'], row['img_path'], str(best_box).strip(), noun[0], row['bbox'], iou]
+                df.loc[int(row['img_id'])] = [row['img_id'], row['img_path'], str(best_box).strip(), str(prompt), row['bbox'], iou]
                 df.to_csv(new_df_path, sep=';', encoding='utf-8', index=False)
-                # reformatted = reformat_owl(best_box)
-                #not going to reformat because ground_truth_owl.csv is already in owls format
-
-                # df.loc[len(df)] = [sanitize_text(clean_text(row['img_id'])), sanitize_text(clean_text(row['img_path'])), sanitize_text(clean_text(str()))]
-
-
-
+        print(f"Finished OWL experiment for {i=}")
+        print(f"Starting OWL experiment for {i=}")
+        counter += 1
+        completed_experiment_list.append(new_df_path)
+    plot_box_and_whiskers(get_owl_single(completed_experiment_list, 'src/ground_truth_owl.csv'))
 
 def run_experiment(experiment, ground_truth_csv, iou_tolerance = None):
     os.makedirs("results", exist_ok=True)
     save_dir = os.path.join("results", experiment.model)
     os.makedirs(save_dir, exist_ok=True)
-    new_df_path = os.path.join(save_dir, f"{experiment.model}_reasoning.csv")
+    new_df_path = os.path.join(save_dir, f"{experiment.model}.csv")
     if iou_tolerance is not None:
         correct = 0
         seen = 0
     if os.path.exists(new_df_path):
-        df = pd.read_csv(new_df_path, sep=';')
+        df = pd.read_csv(new_df_path, sep=';', encoding='utf-8')
+        df.columns = df.columns.str.replace('"', '', regex=False)
     else:
         df = pd.DataFrame(columns=["img_id", "img_path", "text_output", "pred_bbox", "target_bbox", "iou"])
     with open(ground_truth_csv) as f:
@@ -92,7 +142,7 @@ def run_experiment(experiment, ground_truth_csv, iou_tolerance = None):
                 else:
                     iou = get_iou(pred_bbox, target_bbox)
                     pred_bbox_area = get_pred_bbox_area(pred_bbox)
-                df.loc[len(df)] = [row['img_id'], row['img_path'], sanitize_text(clean_text(text)), pred_bbox, target_bbox, iou]
+                df.loc[len(df)] = [row['img_id'], row['img_path'], sanitize_text(clean_text(text)), sanitize_text(clean_text(pred_bbox)), sanitize_text(clean_text(target_bbox)), sanitize_text(clean_text(str(iou)))]
                 if iou_tolerance is not None and pred_bbox is not None:
                     correct += 1 if iou > iou_tolerance else 0
                     seen += 1
@@ -186,10 +236,20 @@ def reformat_owl(box, from_size_tensor, owl_tensor):
     fy = owl_height / og_height
     print(fy)
     return [x1 * fx, y1 * fy, x2 * fx, y2 * fy]
+
+def check_gpt(path):
+    df = pd.read_csv(path, sep=';')
+    print(df.columns)
+    print(len(df.columns))
+    print(df.iloc[0])
 if __name__ == "__main__":
     # run_experiment(GrokExperiment("grok-2-vision-1212", generate_prompt), "src/ground_truth.csv")
     # run_experiment(GeminiExperiment("gemini-2.0-flash-lite", generate_prompt), "src/ground_truth.csv")
-    run_owl(OWLv2(), 'src/ground_truth_owl.csv')
+    # print(generate_owl_prompts('results'))
+    # breakpoint()
+    # run_owl_experiments(OWLv2(), 'src/ground_truth_owl.csv')
+    run_experiment(GPTExperiment('o4-mini', generate_prompt), "src/ground_truth.csv")
+    # check_gpt('results/o4-mini/o4-mini_reasoning.csv')
 
 
 

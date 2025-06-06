@@ -110,6 +110,7 @@ def split_by_indentation(filename):
 def sanitize_text(text):
     if not isinstance(text, str):
         return text
+    text = text.replace(';', '')
     text = text.replace('"', '')
     text = text.replace('""', '')
     text = text.replace('""""', '')  
@@ -121,6 +122,7 @@ def clean_text(text):
         return text
     # Replace all runs of whitespace (spaces, newlines, tabs) with a single space
     cleaned = re.sub(r'\s+', ' ', text)
+    cleaned = text.replace(';', '')
     return cleaned.strip()
 
 def check(csv):
