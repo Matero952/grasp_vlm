@@ -120,6 +120,8 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv')
     plt.savefig(f'results/{model_name}_prediction_grid.png')
 
 def get_owl_single(gt_path):
+    hand_counter = 0
+    index_counter = 0
     owl_yolo_csv_list = []
     # rest_list = []
     ious = {}
@@ -150,9 +152,9 @@ def get_owl_single(gt_path):
         for index, row in df.iterrows():
             to_check_row = gt[gt['img_id'] == row['img_id']]
             if 'index' in to_check_row['annotation_type'].iloc[0]:
-                finger_ious.append(float(row['iou']))
+                finger_ious.append((float(row['iou']), row['img_id']))
             elif 'four' in to_check_row['annotation_type'].iloc[0]:
-                hand_ious.append(float(row['iou']))
+                hand_ious.append((float(row['iou']), row['img_id'] ))
             else:
                 print(f"Nu bueno")
                 print(to_check_row)
@@ -237,7 +239,8 @@ if __name__ == "__main__":
     #                 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano_reasoning.csv', 'results/gpt-4.1-nano.csv', 'results/gpt-4o-mini_reasoning.csv', 'results/gpt-4o-mini.csv',
     #                 'results/o4-mini_reasoning.csv', 'results/o4-mini.csv'
     #                 ]))
-    plot_prediction_grid('results/o4-mini.csv', 64)
+    get_owl_single('src/ground_truth_owl.csv')
+    # plot_prediction_grid('results/o4-mini.csv', 64)
     # get_img_paths_by_tool('src/ground_truth.csv')
 
 
