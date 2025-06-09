@@ -18,9 +18,28 @@ tool_dict = {'drill' : 'drill', 'wacker' : 'weed_wacker', 'glue' : 'glue_gun', '
 models_regex = r"claude-3-5-haiku-latest|claude-3-haiku-20240307|gemini-1.5-flash|gemini-2.0-flash|gemini-2.0-flash-lite|gemini-2.5-flash-preview-05-20|grok-2-vision-1212|gpt-4.1-mini|gpt-4.1-nano|gpt-4o-mini|o4-mini"
 
 def plot_box_and_whiskers(iou_dict: dict):
+    results, combined = get_owl_single('src/ground_truth_owl.csv')
+    for i in combined:
+        hand_prompt, index_prompt = i
+        hand_prompt_values = list(hand_prompt.values())[0]
+        index_prompt_values = list(index_prompt.values())[0]
+        print(hand_prompt_values)
+        print(index_prompt_values)
+        print(f"{len(hand_prompt_values)=}")
+        print(f"{len(index_prompt_values)=}")
+        conjoined_values = hand_prompt_values + index_prompt_values
+        hand_prompt_key = list(hand_prompt.keys())[0]
+        index_prompt_key = list(index_prompt.keys())[0]
+        conjoined_key = f'{hand_prompt_key}_{index_prompt_key}'
+        iou_dict[conjoined_key] = conjoined_values
+    # for key, value in iou_dict.items():
+    #     print(f"{key} : {len(value)}")
+    # breakpoint()
     df = pd.DataFrame(iou_dict)
+    # df.to_csv('test.csv', sep=';', encoding='utf-8')
+    # breakpoint()
     print(df)
-    breakpoint()
+    # breakpoint()
     print(df)
     df = df.melt(var_name="Noun", value_name="IoU")
     plt.figure(figsize=(30, 25))
@@ -30,10 +49,10 @@ def plot_box_and_whiskers(iou_dict: dict):
     plt.xticks(fontsize=10)
     plt.xlabel('Iou', fontsize=20)
     plt.ylabel('Noun', fontsize=20)
-    plt.title('Boxplot of IoUs for Owl and YOLO', fontsize=25)
+    plt.title('Boxplot of IoUs for All Models', fontsize=25)
     plt.tight_layout()
     plt.show()
-    plt.savefig('src/iou_boxplt_t.png')
+    plt.savefig('src/iou_boxplt_tt.png')
 
 def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv'):
     df = pd.read_csv(csv_path, sep=';', encoding='utf-8')
@@ -123,6 +142,7 @@ def get_owl_single(gt_path):
     hand_counter = 0
     index_counter = 0
     owl_yolo_csv_list = []
+    combined = []
     # rest_list = []
     ious = {}
     gt = pd.read_csv(gt_path, delimiter=';', encoding='utf-8')
@@ -152,9 +172,9 @@ def get_owl_single(gt_path):
         for index, row in df.iterrows():
             to_check_row = gt[gt['img_id'] == row['img_id']]
             if 'index' in to_check_row['annotation_type'].iloc[0]:
-                finger_ious.append((float(row['iou']), row['img_id']))
+                finger_ious.append(float(row['iou']))
             elif 'four' in to_check_row['annotation_type'].iloc[0]:
-                hand_ious.append((float(row['iou']), row['img_id'] ))
+                hand_ious.append(float(row['iou']))
             else:
                 print(f"Nu bueno")
                 print(to_check_row)
@@ -176,11 +196,12 @@ def get_owl_single(gt_path):
         prompt_index = (to_check_row_index['noun'].iloc[0]).replace(']', '').replace('[', '').replace("'", '')
         ious[f'{prompt_hand}{suffix}'] = hand_ious
         ious[f'{prompt_index}{suffix}'] = finger_ious
+        combined.append(({f'{prompt_hand}{suffix}' : hand_ious}, {f'{prompt_index}{suffix}' : finger_ious}))
         
-        print(f"Max for {prompt_hand}{suffix}: {max(hand_ious)}. Image: {np.argmax(hand_ious)}") 
-        print(f"Max for {prompt_index}{suffix}: {max(finger_ious)} Image: {np.argmax(finger_ious)}")
-    breakpoint()
-    return ious
+        # print(f"Max for {prompt_hand}{suffix}: {max(hand_ious)}. Image: {np.argmax(hand_ious)}") 
+        # print(f"Max for {prompt_index}{suffix}: {max(finger_ious)} Image: {np.argmax(finger_ious)}")
+    # breakpoint()
+    return ious, combined
 
 
 def get_ious(csv_list):
@@ -232,16 +253,20 @@ if __name__ == "__main__":
     #                 'results/o4-mini_reasoning.csv', 'results/o4-mini.csv'
     #                 ]))
     # breakpoint()
-    # plot_box_and_whiskers(get_ious(['results/claude-3-5-haiku-latest-reasoning_reason.csv', 'results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307-reasoning_reason.csv', 
-    #                 'results/claude-3-haiku-20240307.csv', 'results/gemini-1.5-flash-reasoning.csv', 'results/gemini-1.5-flash.csv', 'results/gemini-2.0-flash-lite-reasoning.csv',
-    #                 'results/gemini-2.0-flash-lite.csv', 'results/gemini-2.0-flash-reasoning_reason.csv', 'results/gemini-2.0-flash.csv', 'results/gemini-2.5-flash-preview-05-20-reasoning.csv',
-    #                 'results/gemini-2.5-flash-preview-05-20.csv', 'results/grok-2-vision-1212-reasoning_reason.csv', 'results/grok-2-vision-1212.csv', 'results/gpt-4.1-mini_reasoning.csv',
-    #                 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano_reasoning.csv', 'results/gpt-4.1-nano.csv', 'results/gpt-4o-mini_reasoning.csv', 'results/gpt-4o-mini.csv',
-    #                 'results/o4-mini_reasoning.csv', 'results/o4-mini.csv'
-    #                 ]))
-    get_owl_single('src/ground_truth_owl.csv')
+    plot_box_and_whiskers(get_ious(['results/claude-3-5-haiku-latest-reasoning_reason.csv', 'results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307-reasoning_reason.csv', 
+                    'results/claude-3-haiku-20240307.csv', 'results/gemini-1.5-flash-reasoning.csv', 'results/gemini-1.5-flash.csv', 'results/gemini-2.0-flash-lite-reasoning.csv',
+                    'results/gemini-2.0-flash-lite.csv', 'results/gemini-2.0-flash-reasoning_reason.csv', 'results/gemini-2.0-flash.csv', 'results/gemini-2.5-flash-preview-05-20-reasoning.csv',
+                    'results/gemini-2.5-flash-preview-05-20.csv', 'results/grok-2-vision-1212-reasoning_reason.csv', 'results/grok-2-vision-1212.csv', 'results/gpt-4.1-mini_reasoning.csv',
+                    'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano_reasoning.csv', 'results/gpt-4.1-nano.csv', 'results/gpt-4o-mini_reasoning.csv', 'results/gpt-4o-mini.csv',
+                    'results/o4-mini_reasoning.csv', 'results/o4-mini.csv'
+                    ]))
+    # get_owl_single('src/ground_truth_owl.csv')
     # plot_prediction_grid('results/o4-mini.csv', 64)
     # get_img_paths_by_tool('src/ground_truth.csv')
+    # results, combined = get_owl_single('src/ground_truth_owl.csv')
+    # print(f'{combined=}')
+    # print(len(combined))
+    # print(get_owl_single('src/ground_truth_owl.csv'))
 
 
 
