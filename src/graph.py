@@ -30,17 +30,17 @@ def plot_box_and_whiskers(iou_dict: dict = None):
     # breakpoint()
     print(df)
     df = df.melt(var_name="Noun", value_name="IoU")
-    plt.figure(figsize=(50, 25))
-    sns.boxplot(x = 'IoU', y = 'Noun', data=df)
+    plt.figure(figsize=(50, 20))
+    sns.boxplot(x = 'IoU', y = 'Noun', data=df, palette='Set2')
     plt.xticks(rotation=45, ha="right")
     plt.yticks(fontsize=20)
     plt.xticks(fontsize=20)
     plt.xlabel('Iou', fontsize=40)
-    plt.ylabel('Noun', fontsize=40)
-    plt.title('Boxplot of IoUs for Owl VIT, YOLO UniOW, and YOLO World', fontsize=50)
+    plt.ylabel('Model', fontsize=40)
+    plt.title('Boxplot of IoUs for Owl VIT, YOLO UniOW, and YOLO World Performance on My Dataset', fontsize=50)
     plt.tight_layout()
     plt.show()
-    plt.savefig('src/get_bes.png')
+    plt.savefig('src/best_noun_model.png')
 
 def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv'):
     df = pd.read_csv(csv_path, sep=';', encoding='utf-8')
@@ -103,11 +103,12 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv')
         df_width = df_x_max - df_x_min
         df_height = df_y_max - df_y_min
         model_match = re.search(models_regex, csv_path)
-        if model_match:
-            if 'reason' in csv_path:
-                model_name = f'{model_match.group(0)}_w_reasoning'
-            else:
-                model_name = model_match.group(0)
+        # if model_match:
+        #     if 'reason' in csv_path:
+        #         model_name = f'{model_match.group(0)}_w_reasoning'
+        #     else:
+        #         model_name = model_match.group(0)
+        model_name = 'YOLO World'
         print(model_name)
         df_rect = patches.Rectangle((df_x_min, df_y_min), df_width, df_height, linewidth=3, edgecolor='red', facecolor='none', label=f'Red = {model_name}')
         axes[idx].add_patch(gt_rect)
@@ -167,9 +168,17 @@ def aggregate_data(root_dir = 'results'):
         index_prompt_key = str(list(index_prompt.keys())[0])
         conjoined_key = f'{hand_prompt_key}-{index_prompt_key}'
         iou_dict[conjoined_key] = conjoined_values
-    vlm_ious = get_ious(vlm_csvs)
-    for key, value in vlm_ious.items():
-        iou_dict[key] = value
+    
+    # filtered = []
+    # for i in vlm_csvs:
+    #     if 'reason' not in i and '_reason' not in i:
+    #         filtered.append(i)
+    # vlm_csvs = filtered
+    # print(vlm_csvs)
+    # breakpoint()
+    # vlm_ious = get_ious(vlm_csvs)
+    # for key, value in vlm_ious.items():
+    #     iou_dict[key] = value
     iou_dict = dict(sorted(iou_dict.items()))
     return iou_dict
 
@@ -182,7 +191,7 @@ def aggregate_data(root_dir = 'results'):
     
     
     
-
+def reorganize():
 
 def get_iou_single(path, idx):
     #works on owl and yolo
@@ -252,86 +261,6 @@ def get_iou_single(path, idx):
     combined.append(({f'{prompt_hand}{suffix}' : hand_ious}, {f'{prompt_index}{suffix}' : finger_ious}))
     return combined
     
-             
-    
-
-
-# def get_owl_single(gt_path):
-#     hand_counter = 0
-#     index_counter = 0
-#     owl_yolo_csv_list = []
-#     combined = []
-#     # rest_list = []
-#     ious = {}
-#     gt = pd.read_csv(gt_path, delimiter=';', encoding='utf-8')
-#     gt.columns = gt.columns.str.replace('"', '', regex=False)
-#     hand_regex = r'grab|grip|grasp|bar|hold|handle'
-#     finger_regex = r'button|lever|switch|press|toggle|trigger'
-#     hand = ['grab', 'grip', 'grasp', 'bar', 'hold', 'handle']
-#     finger = ['button', 'lever', 'switch', 'press', 'toggle', 'trigger']
-#     def_path = Path('results')
-#     for i in def_path.rglob('*.csv'):
-#         # print(str(i))
-#         file_path = Path(i)
-#         parent_dir = file_path.parent
-#         if 'owl' in str(i) or 'yolo' in str(i) and str(parent_dir) == 'results':
-#             # print(str(i))
-#             owl_yolo_csv_list.append(str(i))
-#         else:
-#             # rest_list.append(str(i))
-#             continue
-#     # print(csv_list)
-#     print(owl_yolo_csv_list)
-#     print(len(owl_yolo_csv_list))
-#     for path in owl_yolo_csv_list:
-#         hand_ious = []
-#         finger_ious = []
-#         df = pd.read_csv(path, delimiter=';', encoding='utf-8')
-#         df.columns = df.columns.str.replace('"', '', regex=False)
-#         # print(df.columns)
-#         # for col in df.columns:
-#         #     print(f'{repr(col)=}')
-#         for index, row in df.iterrows():
-#             to_check_row = gt[gt['img_id'] == row['img_id']]
-#             if 'index' in to_check_row['annotation_type'].iloc[0]:
-#                 finger_ious.append(float(row['iou']))
-#             elif 'four' in to_check_row['annotation_type'].iloc[0]:
-#                 hand_ious.append(float(row['iou']))
-#             else:
-#                 print(f"Nu bueno")
-#                 print(to_check_row)
-#                 breakpoint()
-#         to_check_row_hand = df[df['img_id'] == 0]
-#         to_check_row_index = df[df['img_id'] == 1]
-#         # print(to_check_row)
-#         if 'yolo' in path:
-#             suffix = ''
-#             if '_l_' in path and 'uniow' in path:
-#                 suffix = '_yolo_large_uniow'
-#             elif '_m_' in path and 'uniow' in path:
-#                 suffix = '_yolo_medium_uniow'
-#             elif '_s_' in path and 'uniow' in path:
-#                 suffix = '_yolo_small_uniow'
-#             if 'world' in path and 'uniow' not in path:
-#                 suffix += '_world'
-#         else:
-#             suffix = 'owl'
-#         to_check_row = gt[gt['img_id'] == row['img_id']]
-#         prompt_hand = (to_check_row_hand['noun'].iloc[0]).replace(']', '').replace('[', '').replace("'", '')
-#         prompt_index = (to_check_row_index['noun'].iloc[0]).replace(']', '').replace('[', '').replace("'", '')
-#         ious[f'{prompt_hand}{suffix}'] = hand_ious
-#         ious[f'{prompt_index}{suffix}'] = finger_ious
-#         combined.append(({f'{prompt_hand}{suffix}' : hand_ious}, {f'{prompt_index}{suffix}' : finger_ious}))
-#     print(f"{owl_counter=}")
-#     print(f'{yolo_uniow_counter=}')
-#     print(f'{yolo_world_counter=}')
-#     # breakpoint()
-#         # print(f"Max for {prompt_hand}{suffix}: {max(hand_ious)}. Image: {np.argmax(hand_ious)}") 
-#         # print(f"Max for {prompt_index}{suffix}: {max(finger_ious)} Image: {np.argmax(finger_ious)}")
-#     # breakpoint()
-#     return ious, combined
-
-
 def get_ious(csv_list):
     ious = {}
     test_list = []
@@ -376,32 +305,8 @@ def get_img_paths_by_tool(csv_path):
 
 
 if __name__ == "__main__":
-    # plot_box_and_whiskers(get_owl_single('src/ground_truth_owl.csv'))
-    # print(len(['results/claude-3-5-haiku-latest-reasoning_reason.csv', 'results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307-reasoning_reason.csv', 
-    #                 'results/claude-3-haiku-20240307.csv', 'results/gemini-1.5-flash-reasoning.csv', 'results/gemini-1.5-flash.csv', 'results/gemini-2.0-flash-lite-reasoning.csv',
-    #                 'results/gemini-2.0-flash-lite.csv', 'results/gemini-2.0-flash-reasoning_reason.csv', 'results/gemini-2.0-flash.csv', 'results/gemini-2.5-flash-preview-05-20-reasoning.csv',
-    #                 'results/gemini-2.5-flash-preview-05-20.csv', 'results/grok-2-vision-1212-reasoning_reason.csv', 'results/grok-2-vision-1212.csv', 'results/gpt-4.1-mini_reasoning.csv',
-    #                 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano_reasoning.csv', 'results/gpt-4.1-nano.csv', 'results/gpt-4o-mini_reasoning.csv', 'results/gpt-4o-mini.csv',
-    #                 'results/o4-mini_reasoning.csv', 'results/o4-mini.csv'
-    #                 ]))
-    # breakpoint()
-    # plot_box_and_whiskers()
-    plot_box_and_whiskers(aggregate_data())
-    # print(get_iou_single('results/owlvit-base-patch32_0.csv'))
-    # plot_box_and_whiskers(get_ious(['results/claude-3-5-haiku-latest-reasoning_reason.csv', 'results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307-reasoning_reason.csv', 
-    #                 'results/claude-3-haiku-20240307.csv', 'results/gemini-1.5-flash-reasoning.csv', 'results/gemini-1.5-flash.csv', 'results/gemini-2.0-flash-lite-reasoning.csv',
-    #                 'results/gemini-2.0-flash-lite.csv', 'results/gemini-2.0-flash-reasoning_reason.csv', 'results/gemini-2.0-flash.csv', 'results/gemini-2.5-flash-preview-05-20-reasoning.csv',
-    #                 'results/gemini-2.5-flash-preview-05-20.csv', 'results/grok-2-vision-1212-reasoning_reason.csv', 'results/grok-2-vision-1212.csv', 'results/gpt-4.1-mini_reasoning.csv',
-    #                 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano_reasoning.csv', 'results/gpt-4.1-nano.csv', 'results/gpt-4o-mini_reasoning.csv', 'results/gpt-4o-mini.csv',
-    #                 'results/o4-mini_reasoning.csv', 'results/o4-mini.csv'
-    #                 ]))
-    # get_owl_single('src/ground_truth_owl.csv')
-    # plot_prediction_grid('results/o4-mini.csv', 64)
-    # get_img_paths_by_tool('src/ground_truth.csv')
-    # results, combined = get_owl_single('src/ground_truth_owl.csv')
-    # print(f'{combined=}')
-    # print(len(combined))
-    # print(get_owl_single('src/ground_truth_owl.csv'))
+    plot_prediction_grid('results/yolo_world_v2_l_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_1280ft_lvis_minival_2.csv', 64)
+
 
 
 

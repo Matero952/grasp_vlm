@@ -253,7 +253,7 @@ if __name__ == "__main__":
     # run_experiment(GeminiExperiment("gemini-2.0-flash-lite", generate_prompt), "src/ground_truth.csv")
     # print(generate_owl_prompts('results'))
     # breakpoint()
-    gem_models = [('gemini-1.5-flash', 4.1), ('gemini-2.0-flash', 4.1), ('gemini-2.0-flash-lite', 2.1), ('gemini-2.5-flash-preview-05-20', 5.1)]
+    gem_models = [('gemini-2.0-flash', 5), ('gemini-2.0-flash-lite', 2.5), ('gemini-2.5-flash-preview-05-20', 5.5)]
     for i in gem_models:
         model, delay = i
         run_experiment(GeminiExperiment(model, generate_prompt), "src/ground_truth.csv", reasoning=False, delay=delay)

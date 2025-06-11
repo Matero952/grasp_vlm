@@ -1,9 +1,0 @@
-img_id;img_path;text_output;pred_bbox;target_bbox;iou
-0;data/roboflow/screwdriver_19_jpg.rf.6250085fa1d7df8666abd0f2a6b03e19.jpg;```json [162, 525, 569, 884] ```;[162, 525, 569, 884];[213, 39, 254.85, 109];0.0
-1;data/roboflow/glue_13_jpg.rf.0df8478932e9b34ba87460e9bfd87b01.jpg;```json [300,316,333,376] ```;[300, 316, 333, 376];[249, 283, 317.33, 302.17];0.0
-2;data/roboflow/saw_18_jpg.rf.ab0a958d9006ec43edf55d35ca68d3de.jpg;```json [308,638,372,711] ```;[308, 638, 372, 711];[410, 213, 425.45, 241.18];0.0
-3;data/roboflow/solder_14_jpg.rf.51572171683d9fb98c4af7058ac33310.jpg;```json [577,378,704,893] ```;[577, 378, 704, 893];[123, 120, 221, 138];0.0
-4;data/roboflow/wacker_2_jpg.rf.d87338dbcfe8c38ef9f1aebd1f6c5e62.jpg;```json [476,468,532,538] ```;[476, 468, 532, 538];[311, 237, 333.86, 249.14];0.0
-5;data/roboflow/wrench_18_jpg.rf.14cf4c6c94b5729b581f65caf6cb8a50.jpg;```json [743, 760, 863, 886] ```;[743, 760, 863, 886];[329, 340, 592.12, 591.25];0.0
-6;data/roboflow/saw_2_jpg.rf.72f9810ddb3e1e20ee87f6da5f52fabb.jpg;```json [101,449,150,520] ```;[101, 449, 150, 520];[543, 184, 609.4300000000001, 214];0.0
-7;data/roboflow/solder_11_jpg.rf.7aa6405f7bb7683bab7f4c9be42ffc63.jpg;```json [106,556,501,903] ```;[106, 556, 501, 903];[364, 76, 419.89, 147.76];0.0
