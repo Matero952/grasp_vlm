@@ -134,7 +134,21 @@ def check(csv):
     breakpoint()
     print(df['text_output'])
     print(len(df['text_output']))
-
+def get_bnd_box(indv_response, img_id):
+    indv_response = indv_response.replace('""', '"')
+    numbers_match = re.findall(r'\b\d+\.\d+|\b\d+|\B\.\d+', indv_response)
+    if numbers_match:
+        if needs_denormalize(numbers_match[-4:]):
+            #runs check for denormalization because 
+            #some bnd boxes are normalized and some are not
+            bbox = denormalize(img_id, numbers_match[-4:], 'src/ground_truth.csv')
+            #denormalizing if the vlm outputted number normalized 0 - 1
+        else:
+            #otherwise we just take the vlm-outputted bnd box
+            bbox = [float(i) for i in numbers_match[-4:]]
+    else:
+        bbox = [0, 0, 0, 0]
+    return bbox
 def get_bnd_boxes(indv_responses: list) -> list:
     bnd_boxes = []
     counter = 0

@@ -13,3 +13,6 @@ results/old
 results/old_gemini
 .vscode
 data/old
+results/owl
+results/yolo
+results/yolo_world

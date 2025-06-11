@@ -15,7 +15,8 @@ from PIL import Image
 import torchvision.transforms as T
 import cv2
 import numpy as np
-from graph import plot_box_and_whiskers, get_owl_single
+from regen_result_csvs import *
+# from graph import plot_box_and_whiskers, get_owl_single
 from pathlib import Path
 #Allen key ===> Allen wrench tool(allen wrench tool)
 #Drill ===> Drill tool/power tool(tool)
@@ -106,13 +107,16 @@ def run_owl_experiments(experiment, ground_truth_csv, prompt_base_dir = 'results
         print(f"Starting OWL experiment for {i=}")
         counter += 1
         completed_experiment_list.append(new_df_path)
-    plot_box_and_whiskers(get_owl_single(completed_experiment_list, 'src/ground_truth_owl.csv'))
+    # plot_box_and_whiskers(get_owl_single(completed_experiment_list, 'src/ground_truth_owl.csv'))
 
-def run_experiment(experiment, ground_truth_csv, iou_tolerance = None):
+def run_experiment(experiment, ground_truth_csv, delay, iou_tolerance = None, reasoning=False):
     os.makedirs("results", exist_ok=True)
     save_dir = os.path.join("results", experiment.model)
     os.makedirs(save_dir, exist_ok=True)
-    new_df_path = os.path.join(save_dir, f"{experiment.model}.csv")
+    if reasoning:
+        new_df_path = os.path.join(save_dir, f"{experiment.model}_reasoning.csv")
+    else:
+        new_df_path = os.path.join(save_dir, f"{experiment.model}.csv")
     if iou_tolerance is not None:
         correct = 0
         seen = 0
@@ -147,10 +151,12 @@ def run_experiment(experiment, ground_truth_csv, iou_tolerance = None):
                     correct += 1 if iou > iou_tolerance else 0
                     seen += 1
                 df.to_csv(new_df_path, index=False, sep=';')
+                time.sleep(delay)
             if iou_tolerance is not None:
                 print(f"img_id: {row['img_id']}, accuracy: {correct / seen}")
             else:
                 print(f"img_id: {row['img_id']}")
+
 
 #helper functions for extracting key information from responses
 def get_pred_bbox(text: str):
@@ -247,8 +253,10 @@ if __name__ == "__main__":
     # run_experiment(GeminiExperiment("gemini-2.0-flash-lite", generate_prompt), "src/ground_truth.csv")
     # print(generate_owl_prompts('results'))
     # breakpoint()
-    # run_owl_experiments(OWLv2(), 'src/ground_truth_owl.csv')
-    run_experiment(GPTExperiment('o4-mini', generate_prompt), "src/ground_truth.csv")
+    gem_models = [('gemini-1.5-flash', 4.1), ('gemini-2.0-flash', 4.1), ('gemini-2.0-flash-lite', 2.1), ('gemini-2.5-flash-preview-05-20', 5.1)]
+    for i in gem_models:
+        model, delay = i
+        run_experiment(GeminiExperiment(model, generate_prompt), "src/ground_truth.csv", reasoning=False, delay=delay)
     # check_gpt('results/o4-mini/o4-mini_reasoning.csv')
 
 
