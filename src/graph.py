@@ -30,17 +30,17 @@ def plot_box_and_whiskers(iou_dict: dict = None):
     # breakpoint()
     print(df)
     df = df.melt(var_name="Noun", value_name="IoU")
-    plt.figure(figsize=(50, 20))
-    sns.boxplot(x = 'IoU', y = 'Noun', data=df, palette='Set2')
+    plt.figure(figsize=(40, 20))
+    sns.boxplot(x = 'IoU', y = 'Noun', data=df, palette='Set2', fliersize=0)
     plt.xticks(rotation=45, ha="right")
     plt.yticks(fontsize=20)
     plt.xticks(fontsize=20)
-    plt.xlabel('Iou', fontsize=40)
-    plt.ylabel('Model', fontsize=40)
-    plt.title('Boxplot of IoUs for Owl VIT, YOLO UniOW, and YOLO World Performance on My Dataset', fontsize=50)
+    plt.xlabel('Iou', fontsize=30)
+    plt.ylabel('Model', fontsize=30)
+    plt.title('Boxplot of IoUs for All Model Performance on My Dataset', fontsize=50)
     plt.tight_layout()
     plt.show()
-    plt.savefig('src/best_noun_model.png')
+    plt.savefig('src/best_all_model.png')
 
 def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv'):
     df = pd.read_csv(csv_path, sep=';', encoding='utf-8')
@@ -167,18 +167,26 @@ def aggregate_data(root_dir = 'results'):
         hand_prompt_key = str(list(hand_prompt.keys())[0])
         index_prompt_key = str(list(index_prompt.keys())[0])
         conjoined_key = f'{hand_prompt_key}-{index_prompt_key}'
-        iou_dict[conjoined_key] = conjoined_values
+        key = re.search(r'world|owl|uniow', conjoined_key)
+        if key:
+            if key.group(0) == 'world':
+                key = 'YOLO-World'
+            elif key.group(0) == 'owl':
+                key = 'Owl-VIT'
+            else:
+                key = 'YOLO-UniOW'
+        iou_dict[key] = conjoined_values
     
-    # filtered = []
-    # for i in vlm_csvs:
-    #     if 'reason' not in i and '_reason' not in i:
-    #         filtered.append(i)
-    # vlm_csvs = filtered
-    # print(vlm_csvs)
-    # breakpoint()
-    # vlm_ious = get_ious(vlm_csvs)
-    # for key, value in vlm_ious.items():
-    #     iou_dict[key] = value
+    filtered = []
+    for i in vlm_csvs:
+        if 'reason' not in i and '_reason' not in i:
+            filtered.append(i)
+    vlm_csvs = filtered
+    print(vlm_csvs)
+    breakpoint()
+    vlm_ious = get_ious(vlm_csvs)
+    for key, value in vlm_ious.items():
+        iou_dict[key] = value
     iou_dict = dict(sorted(iou_dict.items()))
     return iou_dict
 
@@ -294,7 +302,8 @@ def get_img_paths_by_tool(csv_path):
 
 
 if __name__ == "__main__":
-    plot_prediction_grid('results/yolo_world_v2_l_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_1280ft_lvis_minival_2.csv', 64)
+    plot_box_and_whiskers(aggregate_data())
+    # plot_prediction_grid('results/yolo_world_v2_l_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_1280ft_lvis_minival_2.csv', 64)
 
 
 

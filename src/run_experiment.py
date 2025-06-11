@@ -249,10 +249,6 @@ def check_gpt(path):
     print(len(df.columns))
     print(df.iloc[0])
 if __name__ == "__main__":
-    # run_experiment(GrokExperiment("grok-2-vision-1212", generate_prompt), "src/ground_truth.csv")
-    # run_experiment(GeminiExperiment("gemini-2.0-flash-lite", generate_prompt), "src/ground_truth.csv")
-    # print(generate_owl_prompts('results'))
-    # breakpoint()
     gem_models = [('gemini-2.0-flash', 5), ('gemini-2.0-flash-lite', 2.5), ('gemini-2.5-flash-preview-05-20', 5.5)]
     for i in gem_models:
         model, delay = i
