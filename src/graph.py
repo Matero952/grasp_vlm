@@ -182,17 +182,6 @@ def aggregate_data(root_dir = 'results'):
     iou_dict = dict(sorted(iou_dict.items()))
     return iou_dict
 
-
-
-
-
-    
-
-    
-    
-    
-def reorganize():
-
 def get_iou_single(path, idx):
     #works on owl and yolo
     combined = []
