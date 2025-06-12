@@ -17,10 +17,21 @@ tool_dict = {'drill' : 'drill', 'wacker' : 'weed_wacker', 'glue' : 'glue_gun', '
     'screwdriver' : 'screwdriver', 'wrench' : 'wrench', 'solder' : 'solder_iron', 'allen' : 'allen_key', 'hammer' : 'hammer'}
 models_regex = r"claude-3-5-haiku-latest|claude-3-haiku-20240307|gemini-1.5-flash|gemini-2.0-flash-lite|gemini-2.0-flash|gemini-2.5-flash-preview-05-20|grok-2-vision-1212|gpt-4.1-mini|gpt-4.1-nano|gpt-4o-mini|o4-mini"
 tool_remove_regex = r'screwdriver|glue gun'
+def check(path):
+    df = pd.read_csv(path, sep=';')
+    df.columns = df.columns.str.replace('"', '', regex=False).str.strip()
+    for i in df['iou'].values.tolist():
+        assert isinstance(i, float)
+        print(i, type(i))
+        # print(type())
+
+
+
 def plot_box_and_whiskers(iou_dict: dict = None):
     if iou_dict is None:
         assert 0 > 1
     df = pd.DataFrame(iou_dict)
+    breakpoint()
     print(df.columns.tolist())
     print(f'{len(df.columns.tolist())}=')
     # breakpoint()
@@ -31,7 +42,9 @@ def plot_box_and_whiskers(iou_dict: dict = None):
     print(df)
     df = df.melt(var_name="Noun", value_name="IoU")
     plt.figure(figsize=(40, 20))
-    sns.boxplot(x = 'IoU', y = 'Noun', data=df, palette='Set2', fliersize=0)
+    sns.boxplot(x='Noun', y='IoU', data=df, palette='Set2', showfliers=False)
+    # sns.stripplot(x='Noun', y='IoU', data=df, color='black', alpha=0.7, size=6, jitter=True)
+    # plt.ylim(0, 1.0)
     plt.xticks(rotation=45, ha="right")
     plt.yticks(fontsize=20)
     plt.xticks(fontsize=20)
@@ -40,7 +53,7 @@ def plot_box_and_whiskers(iou_dict: dict = None):
     plt.title('Boxplot of IoUs for All Model Performance on My Dataset', fontsize=50)
     plt.tight_layout()
     plt.show()
-    plt.savefig('src/best_all_model.png')
+    plt.savefig('src/best_all_mocdel.png')
 
 def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv'):
     df = pd.read_csv(csv_path, sep=';', encoding='utf-8')
@@ -302,6 +315,7 @@ def get_img_paths_by_tool(csv_path):
 
 
 if __name__ == "__main__":
+    # check('results/grok-2-vision-1212.csv')
     plot_box_and_whiskers(aggregate_data())
     # plot_prediction_grid('results/yolo_world_v2_l_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_1280ft_lvis_minival_2.csv', 64)
 
