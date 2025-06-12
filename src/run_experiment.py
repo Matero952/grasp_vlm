@@ -16,24 +16,14 @@ import torchvision.transforms as T
 import cv2
 import numpy as np
 from regen_result_csvs import *
-# from graph import plot_box_and_whiskers, get_owl_single
 from pathlib import Path
-#Allen key ===> Allen wrench tool(allen wrench tool)
-#Drill ===> Drill tool/power tool(tool)
-#Glue gun ===> Glue gun(glue gun tool/tool)
-#Hammer ===> Hammer construction tool(hammer/tool)
-#Nail gun ===> Nail gun/nail gun construction tool(nail gun/tool)
-#Wrench ===> Wrench/wrench tool(or just tool)
-#Circular saw ===> Circular saw
 tool_dict_for_yolo_1 = {'drill' : 'drill tool', 'wacker' : 'weed wacker', 'glue' : 'glue gun tool', 'saw' : 'circular saw', 'nail' : 'nail gun', 
     'screwdriver' : 'screwdriver', 'wrench' : 'wrench tool', 'solder' : 'solder iron tool', 'allen' : 'allen wrench tool', 'hammer' : 'hammer'}
 tool_regex = r'drill|wacker|glue|saw|nail|screwdriver|wrench|solder|allen|hammer'
-
 def generate_owl_prompts(base_directory):
     #generates owl prompts from old results
     owl_paths = []
     prompts = []
-    
     path = Path(base_directory)
     for i in path.rglob('*.csv'):
         print(str(i))
@@ -57,7 +47,6 @@ def generate_owl_prompts(base_directory):
 
 def run_owl_experiments(experiment, ground_truth_csv, prompt_base_dir = 'results'):
     prompts = generate_owl_prompts(prompt_base_dir)
-    breakpoint()
     print(f"Starting OWL experiments for {prompts=}")
     counter = 0
     completed_experiment_list = []
@@ -72,14 +61,6 @@ def run_owl_experiments(experiment, ground_truth_csv, prompt_base_dir = 'results
             reader = csv.DictReader(f, delimiter=';')
             # reader.fieldnames = [name.strip() for name in reader.fieldnames]
             for row in reader:
-                # print(row.keys())
-                # breakpoint()
-                # if 'img_path' in row.keys():
-                #     print('AAAAAAAAA')
-                # print(row['img_path'])
-                # for col in df.columns:
-                #     print(repr(list(col)))
-                # print(row)
                 img = Image.open(str(row['img_path']))
                 img = T.ToTensor()(img)
                 prompt_index, prompt_hand = i
@@ -127,7 +108,6 @@ def run_experiment(experiment, ground_truth_csv, delay, iou_tolerance = None, re
         df = pd.DataFrame(columns=["img_id", "img_path", "text_output", "pred_bbox", "target_bbox", "iou"])
     with open(ground_truth_csv) as f:
         reader = csv.DictReader(f, delimiter=';')
-        counter = 0
         for row in reader:
             if str(row['img_id']) in df['img_id'].astype(str).values:
                 if iou_tolerance is not None:
@@ -138,14 +118,13 @@ def run_experiment(experiment, ground_truth_csv, delay, iou_tolerance = None, re
                 continue
             else:
                 text = experiment.process_sample(row['img_path'], row['tool'], row['annotation_type'])
-                pred_bbox = get_pred_bbox(text)
+                text = sanitize_text(clean_text(text))
+                pred_bbox = get_pred_bbox(text, int(row['img_id']))
                 target_bbox = ast.literal_eval(row['bbox'])
                 if pred_bbox is None:
                     iou = "No predicted bbox found."
-                    pred_bbox_area = "No predicted bbox found."
                 else:
                     iou = get_iou(pred_bbox, target_bbox)
-                    pred_bbox_area = get_pred_bbox_area(pred_bbox)
                 df.loc[len(df)] = [row['img_id'], row['img_path'], sanitize_text(clean_text(text)), sanitize_text(clean_text(pred_bbox)), sanitize_text(clean_text(target_bbox)), sanitize_text(clean_text(str(iou)))]
                 if iou_tolerance is not None and pred_bbox is not None:
                     correct += 1 if iou > iou_tolerance else 0
@@ -159,22 +138,21 @@ def run_experiment(experiment, ground_truth_csv, delay, iou_tolerance = None, re
 
 
 #helper functions for extracting key information from responses
-def get_pred_bbox(text: str):
-    text = text.lower()
-    pattern = r'[\[{(]\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*\d+\s*[\]})]?'
-    #searches for all instances of bound boxes in formats: (), [], or {}
-    bbox_matches = re.findall(pattern, text)
-    if bbox_matches:
-        try:
-            pred_bbox = ast.literal_eval(bbox_matches[-1])
-        #last bound box is probably the final answer
-        except SyntaxError:
-            pattern = r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?(?:\D+[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?){3}"
-            pred_bbox_match = re.search(pattern, bbox_matches[-1])
+def get_pred_bbox(indv_response, img_id):
+    indv_response = indv_response.replace('""', '"')
+    numbers_match = re.findall(r'\b\d+\.\d+|\b\d+|\B\.\d+', indv_response)
+    if numbers_match:
+        if needs_denormalize(numbers_match[-4:]):
+            #runs check for denormalization because 
+            #some bnd boxes are normalized and some are not
+            bbox = denormalize(img_id, numbers_match[-4:], 'src/ground_truth.csv')
+            #denormalizing if the vlm outputted number normalized 0 - 1
+        else:
+            #otherwise we just take the vlm-outputted bnd box
+            bbox = [float(i) for i in numbers_match[-4:]]
     else:
-        return None
-    return list(pred_bbox)
-    #returns it as a list
+        bbox = [0, 0, 0, 0]
+    return bbox
 
 def get_iou(bbox_a, bbox_b):
     if len(bbox_a) < 4:
@@ -203,11 +181,6 @@ def get_iou(bbox_a, bbox_b):
     iou = intersection_area / union_area
     return iou
 
-def get_pred_bbox_area(bbox):
-    x1, y1, x2, y2 = bbox
-    width = abs(x2 - x1)
-    height = abs(y2 - y1)
-    return width * height
 def sanitize_text(text):
     if not isinstance(text, str):
         return text
@@ -243,16 +216,11 @@ def reformat_owl(box, from_size_tensor, owl_tensor):
     print(fy)
     return [x1 * fx, y1 * fy, x2 * fx, y2 * fy]
 
-def check_gpt(path):
-    df = pd.read_csv(path, sep=';')
-    print(df.columns)
-    print(len(df.columns))
-    print(df.iloc[0])
 if __name__ == "__main__":
     gem_models = [('gemini-2.0-flash', 5), ('gemini-2.0-flash-lite', 2.5), ('gemini-2.5-flash-preview-05-20', 5.5)]
     for i in gem_models:
         model, delay = i
-        run_experiment(GeminiExperiment(model, generate_prompt), "src/ground_truth.csv", reasoning=False, delay=delay)
+        run_experiment(GeminiExperiment(model, generate_prompt), "src/ground_truth_gemini.csv", reasoning=False, delay=delay)
     # check_gpt('results/o4-mini/o4-mini_reasoning.csv')
 
 

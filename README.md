@@ -2,9 +2,9 @@ Grasp VLM Prediction
 The goal is to see how vlms can produce bounding boxes for finger placements on tools. 
 PLEASE NOTE THAT GENERALLY INDEX FINGER OBJECTS ARE MORE DIFFICULT BECAUSE THEIR LABELLED BBOX IN THE DATASET ARE MUCH SMALLER.
 Results so far: 
-![IoUs for All Models(Including Owl VIT and YOLO UniOW)](src/iou_boxplt_all_models.png)
-![IoUs for Vlms](src/iou_boxplt_t.png)  
-![IoUs for Owl VIT and YOLO UniOW](src/iou_boxplt_owl_yolo_experiment.png)  
+![IoUs for All Models(Including Owl VIT and YOLO UniOW)](data/old/best_all_models.png) 
+![IoUs for Owl VIT and YOLO UniOW](data/old/best_yolo_owl.png)
+![Prediction Grid for Gemini 1.5 Flash](results/gemini-1.5-flash_prediction_grid.png)  
 For owl, I experimented with prompting nouns, specifically with single word prompts vs. descriptive prompts. I later redid Owl to use the same prompts that I found worked best with YOLO, which fundamentally is slightly different because it uses wildcard embeddings and works by identifying bound boxes and then classifying.
 
 The dataset has 200 images and there are two main classes: index finger objects and four finger grasp objects.  

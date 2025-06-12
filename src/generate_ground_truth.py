@@ -44,7 +44,7 @@ def generate_ground_truth(json_dir, output_dir):
                 bbox_y1 = bbox_info['bbox'][1]
                 bbox_x2 = bbox_x1 + bbox_info['bbox'][2]
                 bbox_y2 = bbox_y1 + bbox_info['bbox'][3]
-                bbox_dim = [bbox_x1, bbox_y1, bbox_x2, bbox_y2]
+                bbox_dim = [bbox_y1, bbox_x1, bbox_y2, bbox_x2]
             # bbox_dim = bbox_info['bbox'][0:4]
             #[x, y, width, height] is coco json(the annotation format), but vlms probably perform better with [x1, y1, x2, y2] so I just convert it
             bbox_area = bbox_info['area']
@@ -56,5 +56,5 @@ def generate_ground_truth(json_dir, output_dir):
             new_df.to_csv(ground_truth_csv_path, index=False, sep=';')
     return ground_truth_csv_path
 if __name__ == "__main__":
-    generate_ground_truth('data/roboflow/_annotations.coco.json', "ground_truth_owl.csv")
+    generate_ground_truth('data/roboflow/_annotations.coco.json', "ground_truth_gemini.csv")
     

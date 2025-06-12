@@ -1,12 +1,10 @@
 import csv
 import regex as re
-#these functions are used to clean up csvs as on the first experiment they came out a little funky
-from run_experiment import get_iou, get_pred_bbox_area
+from run_experiment import get_iou
 import pandas as pd
 import ast
 import os
-#TODO NEED TO UPDATE GEMINI RESULTS
-#reform gemini will work with gemini responses but not with claude or grok
+
 def reform(txt_file, ground_truth='src/ground_truth.csv'):
     #will work for the messed up gemini files, will not work for anything else.
     output_csv = os.path.basename(txt_file)
@@ -134,21 +132,7 @@ def check(csv):
     breakpoint()
     print(df['text_output'])
     print(len(df['text_output']))
-def get_bnd_box(indv_response, img_id):
-    indv_response = indv_response.replace('""', '"')
-    numbers_match = re.findall(r'\b\d+\.\d+|\b\d+|\B\.\d+', indv_response)
-    if numbers_match:
-        if needs_denormalize(numbers_match[-4:]):
-            #runs check for denormalization because 
-            #some bnd boxes are normalized and some are not
-            bbox = denormalize(img_id, numbers_match[-4:], 'src/ground_truth.csv')
-            #denormalizing if the vlm outputted number normalized 0 - 1
-        else:
-            #otherwise we just take the vlm-outputted bnd box
-            bbox = [float(i) for i in numbers_match[-4:]]
-    else:
-        bbox = [0, 0, 0, 0]
-    return bbox
+
 def get_bnd_boxes(indv_responses: list) -> list:
     bnd_boxes = []
     counter = 0
@@ -199,20 +183,3 @@ def format_gemini(output_bnd_box, og_img_width, og_img_height) -> list:
     y_max = y_max / 1000
     x_max = x_max / 1000
     return [int(x_min * og_img_width), int(y_min * og_img_height), int(x_max * og_img_width), int(y_max * og_img_height)]
-
-
-def pls_grok(txt_file):
-    with open(txt_file, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-        counter = 0
-        for line in lines:
-            if 'To determine' in line:
-                counter += 1
-    print(counter)
-
-# print(len(get_bnd_boxes(split_by_indentation('results/raw_text/grok-2-vision-1212/grok-2-vision-1212.txt'))))
-reform('results/raw_text/o4-mini_reasoning/o4-mini_reasoning.txt')
-# pls_grok('results/raw_text/grok-2-vision-1212-reasoning/grok-2-vision-1212-reasoning.txt')
-# split_by_custom_delim('results/raw_text/claude-3-5-haiku-latest-reasoning/claude-3-5-haiku-latest-reasoning.txt', r'"""\n|I apologize')
-# check('output.csv')
-#lets have a csv checking pipeline where we check if the csv is first of all ok, if it isnt, we refer back to the text file to fix it basically.
