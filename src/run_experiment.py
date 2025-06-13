@@ -217,10 +217,10 @@ def reformat_owl(box, from_size_tensor, owl_tensor):
     return [x1 * fx, y1 * fy, x2 * fx, y2 * fy]
 
 if __name__ == "__main__":
-    gem_models = [('gemini-2.0-flash', 5), ('gemini-2.0-flash-lite', 2.5), ('gemini-2.5-flash-preview-05-20', 5.5)]
+    gem_models = [('gemini-2.0-flash-lite', 2.5), ('gemini-2.0-flash', 4.5), ('gemini-2.0-flash-lite', 2.5), ('gemini-2.5-flash-preview-05-20', 5.5), ('gemini-1.5-flash', 4.3)]
     for i in gem_models:
         model, delay = i
-        run_experiment(GeminiExperiment(model, generate_prompt), "src/ground_truth_gemini.csv", reasoning=False, delay=delay)
+        run_experiment(GeminiExperiment(model, generate_prompt), "src/ground_truth_gemini.csv", reasoning=True, delay=delay)
     # check_gpt('results/o4-mini/o4-mini_reasoning.csv')
 
 
