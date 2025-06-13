@@ -39,12 +39,22 @@ def generate_ground_truth(json_dir, output_dir):
                 bot_right_y = int(img['height']) - (bbox_info['bbox'][1])
                 #Owls image coordinates are not in standard cartesian
                 bbox_dim = [top_left_x, top_left_y, bot_right_x, bot_right_y]
-            else:
+            elif 'gemini' in output_dir:
                 bbox_x1 = bbox_info['bbox'][0]
                 bbox_y1 = bbox_info['bbox'][1]
                 bbox_x2 = bbox_x1 + bbox_info['bbox'][2]
                 bbox_y2 = bbox_y1 + bbox_info['bbox'][3]
                 bbox_dim = [bbox_y1, bbox_x1, bbox_y2, bbox_x2]
+            elif 'grok' in output_dir:
+                top_left_x1 = bbox_info['bbox'][0]
+                bot_left_bbox_y1 = bbox_info['bbox'][1]
+                width = bbox_info['bbox'][2]
+                height = bbox_info['bbox'][3]
+                top_left_y1 = bot_left_bbox_y1 + height
+                bot_right_x2 = top_left_x1 + width
+                bot_right_y2 = bot_left_bbox_y1
+                bbox_dim = [top_left_x1, top_left_y1, bot_right_x2, bot_right_y2]
+
             # bbox_dim = bbox_info['bbox'][0:4]
             #[x, y, width, height] is coco json(the annotation format), but vlms probably perform better with [x1, y1, x2, y2] so I just convert it
             bbox_area = bbox_info['area']

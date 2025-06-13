@@ -43,9 +43,9 @@ def plot_box_and_whiskers(iou_dict: dict = None):
     df = df.melt(var_name="Noun", value_name="IoU")
     plt.figure(figsize=(40, 20))
     sns.boxplot(x='Noun', y='IoU', data=df, palette='Set2', showfliers=False)
-    # sns.stripplot(x='Noun', y='IoU', data=df, color='black', alpha=0.7, size=6, jitter=True)
+    sns.stripplot(x='Noun', y='IoU', data=df, color='black', alpha=0.7, size=6, jitter=True)
     # plt.ylim(0, 1.0)
-    plt.xticks(rotation=45, ha="right")
+    plt.xticks(rotation=0, ha="right")
     plt.yticks(fontsize=20)
     plt.xticks(fontsize=20)
     plt.xlabel('Iou', fontsize=30)
@@ -53,7 +53,7 @@ def plot_box_and_whiskers(iou_dict: dict = None):
     plt.title('Boxplot of IoUs for All Model Performance on My Dataset', fontsize=50)
     plt.tight_layout()
     plt.show()
-    plt.savefig('src/best_all_mocdel.png')
+    plt.savefig('src/best_all_mocdeccl.png')
 
 def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv'):
     df = pd.read_csv(csv_path, sep=';', encoding='utf-8')
@@ -151,6 +151,7 @@ def aggregate_data(root_dir = 'results'):
                 continue
         else:
             vlm_csvs.append(str(i))
+    vlm_csvs = ['results/gemini-1.5-flash.csv', 'results/gemini-2.0-flash.csv']
     # for i in owl_yolo_csvs:
     print(len(owl_yolo_csvs))
     for idx, i in enumerate(owl_yolo_csvs):
@@ -190,16 +191,16 @@ def aggregate_data(root_dir = 'results'):
                 key = 'YOLO-UniOW'
         iou_dict[key] = conjoined_values
     
-    filtered = []
-    for i in vlm_csvs:
-        if 'reason' not in i and '_reason' not in i:
-            filtered.append(i)
-    vlm_csvs = filtered
-    print(vlm_csvs)
-    breakpoint()
-    vlm_ious = get_ious(vlm_csvs)
-    for key, value in vlm_ious.items():
-        iou_dict[key] = value
+    # filtered = []
+    # for i in vlm_csvs:
+    #     if 'reason' not in i and '_reason' not in i:
+    #         filtered.append(i)
+    # vlm_csvs = filtered
+    # print(vlm_csvs)
+    # breakpoint()
+    # vlm_ious = get_ious(vlm_csvs)
+    # for key, value in vlm_ious.items():
+    #     iou_dict[key] = value
     iou_dict = dict(sorted(iou_dict.items()))
     return iou_dict
 
