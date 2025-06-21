@@ -1,6 +1,8 @@
 import os
 from PIL import Image
 import re
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 '''THIS FILE IS FOR ADDING TO THE DATASET AND ORGANIZING BY GROUP. YOU DONT ACTUALLY NEED THIS FILE UNLESS YOU WANT TO ORGANIZE DATA In RAW DATA.'''
 def generate_img_path_list(parent_dir: str) -> list:
@@ -57,19 +59,38 @@ def rename(path_list, output_dir) -> None:
         #add to counter
     return None
     #doesnt need to return anything
-    
+def convert_all_to_jpg(parent_dir='/home/mateo/dataset_extension'):
+    paths = []
+    for root, dirs, files in os.walk(parent_dir):
+        for file in files:
+            ext = os.path.splitext(file)[1].lower()
+            if ext in ['.png', '.webp', '.jpeg', '.WEBP', '.JPG', '.webp.']:  # skip .jpg
+                paths.append(os.path.join(root, file))
+    convert_to_jpg(paths)
+
 def convert_to_jpg(path_list: list) -> None:
     '''Converts all images in generated path list to .jpg format.
         Doesn't return anything.\n
         After you do this function, please use rename otherwise .jpg data might be stored in a non-.jpg file.'''
+    to_remove = []
     for path in path_list:
+        base_name = os.path.splitext(path)[0]
+        new_path = base_name + ".jpg"
+        img = Image.open(path)
+        img.verify()
         img = Image.open(path)
         img = img.convert('RGB')
-        img.save(path, 'JPEG', quality=90)
+        img.save(new_path, 'JPEG', quality=90)
+        to_remove.append(path)
+    for path in to_remove:
+        os.remove(path)
     return None
 
 if __name__ == "__main__":
-    pths = generate_img_path_list('data/raw/wacker')
-    convert_to_jpg(pths)
-    rename(pths, 'wacker_formatted')
+    from PIL import features
+    # print(features.check('webp'))
+    convert_all_to_jpg()
+    # pths = generate_img_path_list('data/raw/wacker')
+    # convert_to_jpg(pths)
+    # rename(pths, 'wacker_formatted')
 
