@@ -1,8 +1,8 @@
 
-grasp_vlm - v3 2025-06-20 5:13pm
+grasp_vlm - v5 2025-06-21 8:54am
 ==============================
 
-This dataset was exported via roboflow.com on June 20, 2025 at 11:14 PM GMT
+This dataset was exported via roboflow.com on June 21, 2025 at 2:54 PM GMT
 
 Roboflow is an end-to-end computer vision platform that helps you
 * collaborate with your team on computer vision projects
@@ -22,6 +22,7 @@ Finger_location are annotated in COCO format.
 
 The following pre-processing was applied to each image:
 * Auto-orientation of pixel data (with EXIF-orientation stripping)
+* Resize to 1000x1000 (Stretch)
 
 No image augmentation techniques were applied.
 

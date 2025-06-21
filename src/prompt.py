@@ -1,3 +1,4 @@
+
 def generate_prompt(tool, annotation_type):
     part_a = f"Given the image of a {tool}, "
     if annotation_type == "index_finger":
