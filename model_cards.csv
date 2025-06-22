@@ -1,0 +1,11 @@
+model;coordinate_format
+claude-3-5-haiku-latest;normalized(0-1) coordinates [x1, y1, x2, y2] (top-left to bottom-right, y-axis increases downward, 0,0 at top-left, 1,1 at bottom-right)
+claude-3-haiku-20240307;normalized(0-1) coordinates [x1, y1, x2, y2] (top-left to bottom-right, y-axis increases downward, 0,0 at top-left, 1,1 at bottom-right)
+o4-mini;normalized coordinates(0-1) [x1, y1, x2, y2] (top-left to bottom-right, y-axis increases downward, 0,0 at top-left, 1,1 at bottom-right)
+gpt-4o-mini;normalized coordinates(0-1) [x1, y1, x2, y2] (top-left to bottom-right, y-axis increases downward, 0,0 at top-left, 1,1 at bottom-right)
+gpt-4.1-nano;normalized coordinates(0-1) [x1, y1, x2, y2] (top-left to bottom-right, y-axis increases downward, 0,0 at top-left, 1,1 at bottom-right)
+grok-2-vision-1212;normalized(0-1) coordinates [x1, y1, x2, y2] (top-left to bottom-right, y-axis increases downward, 0,0 at top-left, 1,1 at bottom-right)
+gemini-1.5-flash;normalized(0-1000) coordinates [y_min, x_min, y_max, x_max] (bot-left to top-right, y-axis increases downward, 0,0 at top-left, 1,1 at bottom-right)
+gemini-2.5-flash-preview-tts;normalized(0-1000) coordinates [y_min, x_min, y_max, x_max] (bot-left to top-right, y-axis increases downward, 0,0 at top-left, 1,1 at bottom-right)
+gemini-2.0-flash-lite;normalized(0-1000) coordinates [y_min, x_min, y_max, x_max] (bot-left to top-right, y-axis increases downward, 0,0 at top-left, 1,1 at bottom-right)
+gemini-2.0-flash;normalized(0-1000) coordinates [y_min, x_min, y_max, x_max] (bot-left to top-right, y-axis increases downward, 0,0 at top-left, 1,1 at bottom-right)
