@@ -15,7 +15,7 @@ from pathlib import Path
 matplotlib.use('AGG')
 tool_dict = {'drill' : 'drill', 'wacker' : 'weed_wacker', 'glue' : 'glue_gun', 'saw' : 'circular_saw', 'nail' : 'nail_gun', 
     'screwdriver' : 'screwdriver', 'wrench' : 'wrench', 'solder' : 'solder_iron', 'allen' : 'allen_key', 'hammer' : 'hammer'}
-models_regex = r"claude-3-5-haiku-latest|claude-3-haiku-20240307|gemini-1.5-flash|gemini-2.0-flash-lite|gemini-2.0-flash|gemini-2.5-flash-preview-05-20|grok-2-vision-1212|gpt-4.1-mini|gpt-4.1-nano|gpt-4o-mini|o4-mini"
+models_regex = r"claude-3-5-haiku-latest|claude-3-haiku-20240307|gemini-1.5-flash|gemini-2.0-flash-lite|gemini-2.0-flash|gemini-2.5-flash-preview-05-20|grok-2-vision-1212|gpt-4.1-mini|gpt-4.1-nano|gpt-4o-mini|o4-mini|gemini-2.5-flash-lite"
 tool_remove_regex = r'screwdriver|glue gun'
 def check(path):
     df = pd.read_csv(path, sep=';')
@@ -26,7 +26,32 @@ def check(path):
         # print(type())
 
 
+def plot_box_and_whiskers_(csv_path: str):
+    counter = 0
+    df = pd.read_csv(csv_path, sep=';', encoding='utf-8')
+    df.columns = df.columns.str.replace('"', '', regex=False).str.strip()
+    ious = []
+    print(len(df))
+    breakpoint()
+    bad_rows = []
+    for index, row in df.iterrows():
+        try:
+            iou_dict = ast.literal_eval(row['ious'])
+            assert isinstance(iou_dict, dict)
+            for i in iou_dict.values():
+                ious.append(float(i))
+        except:
+            bad_rows.append(index)
 
+    print(f"Bad rows: {bad_rows}")
+    print(df.loc[bad_rows])
+    print(ious)
+    print(len(ious))
+    # counter = 0
+    # for i in ious:
+    #     counter += 1
+    # print(counter)
+        # ious.append(float(row['io']))
 def plot_box_and_whiskers(iou_dict: dict = None):
     if iou_dict is None:
         assert 0 > 1
@@ -40,10 +65,10 @@ def plot_box_and_whiskers(iou_dict: dict = None):
     print(df)
     # breakpoint()
     print(df)
-    df = df.melt(var_name="Noun", value_name="IoU")
+    # df = df.melt(var_name="Noun", value_name="ious")
     plt.figure(figsize=(40, 20))
-    sns.boxplot(x='Noun', y='IoU', data=df, palette='Set2', showfliers=False)
-    sns.stripplot(x='Noun', y='IoU', data=df, color='black', alpha=0.7, size=6, jitter=True)
+    sns.boxplot(x='gemini', y='ious', data=df, palette='Set2', showfliers=False)
+    sns.stripplot(x='gemini', y='ious', data=df, color='black', alpha=0.7, size=6, jitter=True)
     # plt.ylim(0, 1.0)
     plt.xticks(rotation=0, ha="right")
     plt.yticks(fontsize=20)
@@ -55,7 +80,7 @@ def plot_box_and_whiskers(iou_dict: dict = None):
     plt.show()
     plt.savefig('src/best_all_mocdeccl.png')
 
-def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='src/ground_truth.csv'):
+def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'):
     df = pd.read_csv(csv_path, sep=';', encoding='utf-8')
     gt = pd.read_csv(gt_file, sep=';', encoding='utf-8')
     df.columns = df.columns.str.replace('"', '', regex=False).str.strip()
@@ -317,7 +342,9 @@ def get_img_paths_by_tool(csv_path):
 
 if __name__ == "__main__":
     # check('results/grok-2-vision-1212.csv')
-    plot_box_and_whiskers(aggregate_data())
+    # plot_box_and_whiskers(aggregate_data())
+    plot_box_and_whiskers_('results/grok-2-vision-1212.csv')
+    # plot_box_and_whiskers(get_ious(['results/gemini-2.5-flash-lite-preview-06-17.csv']))
     # plot_prediction_grid('results/yolo_world_v2_l_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_1280ft_lvis_minival_2.csv', 64)
 
 
