@@ -12,6 +12,7 @@ import ast
 import os
 import numpy as np
 from pathlib import Path
+import json
 matplotlib.use('AGG')
 tool_dict = {'drill' : 'drill', 'wacker' : 'weed_wacker', 'glue' : 'glue_gun', 'saw' : 'circular_saw', 'nail' : 'nail_gun', 
     'screwdriver' : 'screwdriver', 'wrench' : 'wrench', 'solder' : 'solder_iron', 'allen' : 'allen_key', 'hammer' : 'hammer'}
@@ -35,16 +36,31 @@ def plot_box_and_whiskers_(csv_path: str):
     breakpoint()
     bad_rows = []
     for index, row in df.iterrows():
-        try:
-            iou_dict = ast.literal_eval(row['ious'])
-            assert isinstance(iou_dict, dict)
-            for i in iou_dict.values():
-                ious.append(float(i))
-        except:
-            bad_rows.append(index)
+        # print(row['ious'])
+        iou_dict = ast.literal_eval(row['ious'])
+        print(row['ious'], print(row['img_path']))
+        # breakpoint()
+        
+        if len(iou_dict.values()) != len(ast.literal_eval(row['target_bboxes']).values()):
+            print(row['img_id'])
+            print('Found it')
+            
+            print(len(iou_dict.values()))
+            print(iou_dict)
+            print(len(ast.literal_eval(row['target_bboxes']).values()))
+            breakpoint()
+        # assert isinstance(iou_dict, dict)
+        for i in iou_dict.values():
+            assert isinstance(i, float)
+            ious.append(float(i))
+            
+            
+        
+            # bad_rows.append(index)
+    
 
-    print(f"Bad rows: {bad_rows}")
-    print(df.loc[bad_rows])
+    # print(f"Bad rows: {bad_rows}")
+    # print(df.loc[bad_rows])
     print(ious)
     print(len(ious))
     # counter = 0
@@ -343,7 +359,7 @@ def get_img_paths_by_tool(csv_path):
 if __name__ == "__main__":
     # check('results/grok-2-vision-1212.csv')
     # plot_box_and_whiskers(aggregate_data())
-    plot_box_and_whiskers_('results/grok-2-vision-1212.csv')
+    plot_box_and_whiskers_('results/gemini-2.5-flash-lite-preview-06-17.csv')
     # plot_box_and_whiskers(get_ious(['results/gemini-2.5-flash-lite-preview-06-17.csv']))
     # plot_prediction_grid('results/yolo_world_v2_l_vlpan_bn_2e-3_100e_4x8gpus_obj365v1_goldg_train_1280ft_lvis_minival_2.csv', 64)
 

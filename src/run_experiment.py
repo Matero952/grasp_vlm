@@ -351,7 +351,7 @@ if __name__ == "__main__":
     # claude_models = ['claude-3-5-haiku-latest', 'claude-3-haiku-20240307']
     # grok_models = ['grok-2-vision-1212']
     gpt_models = ['gpt-4.1-mini', 'gpt-4.1-nano', 'o4-mini']
-    gem_models = ['gemini-2.0-flash-lite']
+    gem_models = ['gemini-2.5-flash']
     # for i in claude_models:
     #     run_experiment(ClaudeExperiment(i, get_prompt), "ground_truth_test.csv")
     
@@ -366,11 +366,12 @@ if __name__ == "__main__":
         try:
             for i in gem_models:
                 run_experiment(GeminiExperiment(i, get_prompt), 'ground_truth_test.csv')
-            for i in gpt_models:
-                run_experiment(GPTExperiment(i, get_prompt), "ground_truth_test.csv")
-        except Exception:
+            # for i in gpt_models:
+                # run_experiment(GPTExperiment(i, get_prompt), "ground_truth_test.csv")
+        except Exception as e:
             print(f'{attempts=}')
             attempts += 1
+            print(e)
             # print(attempt)
             continue
     else:

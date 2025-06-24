@@ -102,3 +102,48 @@ class OWLv2:
             print(f"{k=}, {v=}")
         return out_dict
 
+if __name__ == '__main__':
+    from PIL import Image
+    import torchvision.transforms as T
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as patches
+    import cv2
+
+    # print('Starting OWL test')
+    # owl = OWLv2()
+    # img = Image.open('grasp_vlm_dataset/shovel1_jpg.rf.3a96b405cb30873a37faf65b8e32223d.jpg')
+    # img = T.ToTensor()(img)
+    # prompt = ['shovel']
+    # result_dict = owl.predict(img, prompt)
+    # print(f'{result_dict=}')
+    # best_box = result_dict[prompt[0]]['boxes'][torch.argmax(result_dict[prompt[0]]['scores'])]
+    # best_box = best_box.tolist()
+    # print(f'{best_box=}')
+    # # Load image (using cv2 or any other method)
+    best_box = [144, 526, 975, 622]
+    # best_box = [144, 526, 831, 96]
+    img = cv2.imread('grasp_vlm_dataset/allen_1_jpg.rf.a73ee009d63cee3f706aae5f396f4180.jpg')
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB for matplotlib
+
+    # Define bounding box coordinates
+    # Format: [xmin, ymin, xmax, ymax]
+
+    # Create plot
+    fig, ax = plt.subplots()
+    ax.imshow(img)
+
+    # Create a Rectangle patch
+    rect = patches.Rectangle(
+        (best_box[0], best_box[1]),            # (x, y)
+        best_box[2] - best_box[0],             # width
+        best_box[3] - best_box[1],             # height
+        linewidth=2,
+        edgecolor='red',
+        facecolor='none'
+    )
+
+    # Add the rectangle to the Axes
+    ax.add_patch(rect)
+
+    plt.axis('off')
+    plt.show()
