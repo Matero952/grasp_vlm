@@ -193,25 +193,47 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                     else:
                         assert 0 > 1, print('this should never happen?!')
                     #after this we append results
+                    rows.append(row)
                     pass
                 else:
                     #otherwise just append the current row that we are at and just continue
                     #else just append the row
                     pass
                     #just continue if we do not need to redo this row
-                rows.append(row)
+                #instead of appening the row here, we need to instead append the cooresponding read_df row
+                    to_check_row = read_df[read_df['img_id'].astype(str).str.strip() == row['img_id'].strip()].iloc[0].to_dict()
+                    rows.append(to_check_row) 
+                df = pd.DataFrame(rows)
+                df.to_csv()
+                # rows.append()
         elif df:
+            rows = []
             #if we are not changing anything and just doing a basic read
             #add owl check and vlm_check
             #basic read and write, if a row doesnt exist, process, no changing
             for row in reader:
                 if str(row['img_id']) in df['img_id'].astype(str).values:
+                    to_check_row = df[df['img_id'].astype(str).str.strip() == row['img_id'].strip()].iloc[0].to_dict()
+                    rows.append(to_check_row)
                     continue
                 else:
+                    if owl_experiment:
+                        prompt = get_prompt_owl(row)
+                        result = process_owl_output(experiment, row, prompt)
+                        reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, result, row)
+                        row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'prompts': prompt}
+                    elif not owl_experiment:
+                        new_response, pred_dict, input_tokens, output_tokens = process_vlm_output(experiment, row)
+                        reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, pred_dict, row)
+                        row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'text_output': new_response, 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'input_tokens': input_tokens, 'output_tokens': output_tokens}
+                    else:
+                        assert 0 > 1, print('this should never happen?!')
+                    rows.append(row)
                     #generate model output
                     #append everything at the end
                     pass
             pass
+    
 
 
 
