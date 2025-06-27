@@ -163,26 +163,43 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
     if to_change is not None:
         assert os.path.exists(old_path), print(f'using to_change assumes that you have an old path that you are reading from and changing specific parts of, and {old_path} does not exist')
         read_df = pd.read_csv(old_path, sep=';')
+        #read_df must be completed and have all 500 img ids!
     elif os.path.exists(f'results/{file_stem}.csv'):
         df = pd.read_csv(f'results/{file_stem}.csv', sep=';')
     else:
-        df = pd.DataFrame(columns=['img_id', 'img_path', 'text_output', 'pred_bboxes', 'target_bboxes', 'ious', 'input_tokens', 'output_tokens'])
+        if not owl_experiment:
+            df = pd.DataFrame(columns=['img_id', 'img_path', 'text_output', 'pred_bboxes', 'target_bboxes', 'ious', 'input_tokens', 'output_tokens'])
+        else:
+            df = pd.DataFrame(columns=['img_id', 'img_path', 'pred_bboxes', 'target_bboxes', 'ious', 'prompts'])
     os.makedirs('results', exist_ok=True)
     with open(ground_truth_csv_path, 'r') as f:
         reader = csv.DictReader(f, delimiter=';')
         if read_df:
+            rows = []
             #this means that we want to change existing values for whatever reason
             for row in reader:
                 if extract_to_change_info(row) == to_change:
                     #check to see if we want to redo this row
                     #if we do, process new results and append, otherwise, just continue
-                    #add owl vlm logic and checking and then append results
+                    if owl_experiment:
+                        prompt = get_prompt_owl(row)
+                        result = process_owl_output(experiment, row, prompt)
+                        reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, result, row)
+                        row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'prompts': prompt}
+                    elif not owl_experiment:
+                        new_response, pred_dict, input_tokens, output_tokens = process_vlm_output(experiment, row)
+                        reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, pred_dict, row)
+                        row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'text_output': new_response, 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'input_tokens': input_tokens, 'output_tokens': output_tokens}
+                    else:
+                        assert 0 > 1, print('this should never happen?!')
+                    #after this we append results
                     pass
                 else:
                     #otherwise just append the current row that we are at and just continue
-                    continue
+                    #else just append the row
+                    pass
                     #just continue if we do not need to redo this row
-
+                rows.append(row)
         elif df:
             #if we are not changing anything and just doing a basic read
             #add owl check and vlm_check
