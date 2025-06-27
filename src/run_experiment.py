@@ -151,7 +151,6 @@ def get_test_info_for_prompts(prompt_idx,
 
             # breakpoint()
 
-
 def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_truth_csv_path='ground_truth_test.csv', to_change:str = None, old_path:str=None):
     if experiment is None:
         owl_experiment = True
@@ -172,17 +171,29 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
     with open(ground_truth_csv_path, 'r') as f:
         reader = csv.DictReader(f, delimiter=';')
         if read_df:
+            #this means that we want to change existing values for whatever reason
             for row in reader:
                 if extract_to_change_info(row) == to_change:
-                    #this means that it is a row we need to change, naturally, if we arent changing anything and 
-                    #just naturally generating stuff for the first item, then this will evaluate to fasle
-                    #put changing logic and stuff here
+                    #check to see if we want to redo this row
+                    #if we do, process new results and append, otherwise, just continue
+                    #add owl vlm logic and checking and then append results
                     pass
                 else:
-                    #put continuing and appending old row logic here
-                    pass
+                    #otherwise just append the current row that we are at and just continue
+                    continue
+                    #just continue if we do not need to redo this row
+
         elif df:
+            #if we are not changing anything and just doing a basic read
+            #add owl check and vlm_check
             #basic read and write, if a row doesnt exist, process, no changing
+            for row in reader:
+                if str(row['img_id']) in df['img_id'].astype(str).values:
+                    continue
+                else:
+                    #generate model output
+                    #append everything at the end
+                    pass
             pass
 
 
