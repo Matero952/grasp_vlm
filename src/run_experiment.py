@@ -162,8 +162,17 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
     file_stem += f'_change_{to_change}' if to_change is not None else f''
     file_stem += '.csv'
     new_df_path = os.path.join('results', file_stem)
+    with open(ground_truth_csv_path, 'r') as f:
+        reader = csv.DictReader(f, delimiter=';')
+        # if owl_experiment:
+        #     for row in reader:
 
 
+
+    
+
+def extract_to_change_info(row: dict):
+    #if to change is not none, then we need a way to universally determine if we need to rerun that result
 
 def process_vlm_output(experiment, row: dict):
     #running the experiment uses csv dictreaders, so make sure that the input to this is a row of the reader of type dictionary
@@ -302,17 +311,6 @@ def calculate_iou_results(experiment: VisionExperiment|GeminiExperiment|OWLv2, p
             else:
                 assert 0 > 1, (print(target_keys), print(row['bboxes']), print('If it is a one handed object, then the annotaiton needs to be either hand or index'))
             return pred_boxes_reformatted, result_iou_dict
-        
-
-
-            
-
-
-
-
-
-
-
 
 def get_token_input_output_size(experiment, response):
     if isinstance(experiment, GeminiExperiment):
@@ -364,25 +362,6 @@ def sanitize_text(text):
     text = text.replace(';', '')
     text = re.sub(r'\s+', ' ', text)
     return f"{text.strip()}"
-
-def reformat_owl(box, from_size_tensor, owl_tensor):
-    #converts (top_left_x, top_left_y, bottom_right_x, bottom_right_y)
-    #to (bot_x1, bot_y1, top_x2, top_y2)'
-    assert isinstance(from_size_tensor, torch.Tensor)
-    assert isinstance(owl_tensor, torch.Size)
-    x1, y1, x2, y2 = box
-    _, og_height, og_width = from_size_tensor.shape
-    print(owl_tensor)
-    print(f"og height: {og_height}, og_width: {og_width}")
-    breakpoint()
-    _, _, owl_height, owl_width = owl_tensor
-    print(f"owl height: {owl_height}, owl_width: {owl_width}")
-
-    fx = owl_width / og_width
-    print(fx)
-    fy = owl_height / og_height
-    print(fy)
-    return [x1 * fx, y1 * fy, x2 * fx, y2 * fy]
 
 if __name__ == "__main__":
     # print(get_iou([0.11, 0.34, 0.47, 0], [0.372, 0.137, 0.49, 0.4225]))
