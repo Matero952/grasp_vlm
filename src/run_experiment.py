@@ -152,7 +152,7 @@ def get_test_info_for_prompts(prompt_idx,
             # breakpoint()
 
 
-def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_truth_csv_path='ground_truth_test.csv', to_change:str = None):
+def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_truth_csv_path='ground_truth_test.csv', to_change:str = None, old_path:str=None):
     if experiment is None:
         owl_experiment = True
     else:
@@ -161,11 +161,30 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
     file_stem = f'{experiment.model}' 
     file_stem += f'_change_{to_change}' if to_change is not None else f''
     file_stem += '.csv'
-    new_df_path = os.path.join('results', file_stem)
+    if to_change is not None:
+        assert os.path.exists(old_path), print(f'using to_change assumes that you have an old path that you are reading from and changing specific parts of, and {old_path} does not exist')
+        read_df = pd.read_csv(old_path, sep=';')
+    elif os.path.exists(f'results/{file_stem}.csv'):
+        df = pd.read_csv(f'results/{file_stem}.csv', sep=';')
+    else:
+        df = pd.DataFrame(columns=['img_id', 'img_path', 'text_output', 'pred_bboxes', 'target_bboxes', 'ious', 'input_tokens', 'output_tokens'])
+    os.makedirs('results', exist_ok=True)
     with open(ground_truth_csv_path, 'r') as f:
         reader = csv.DictReader(f, delimiter=';')
-        # if owl_experiment:
-        #     for row in reader:
+        if read_df:
+            for row in reader:
+                if extract_to_change_info(row) == to_change:
+                    #this means that it is a row we need to change, naturally, if we arent changing anything and 
+                    #just naturally generating stuff for the first item, then this will evaluate to fasle
+                    #put changing logic and stuff here
+                    pass
+                else:
+                    #put continuing and appending old row logic here
+                    pass
+        elif df:
+            #basic read and write, if a row doesnt exist, process, no changing
+            pass
+
 
 
 
@@ -173,6 +192,22 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
 
 def extract_to_change_info(row: dict):
     #if to change is not none, then we need a way to universally determine if we need to rerun that result
+    target_boxes = ast.literal_eval(row['bboxes'])
+    target_keys = list(target_boxes.keys())
+    target_keys: list[str] = [i.strip() for i in target_keys]
+    if len(target_keys) == 2:
+        return 'two_hand' if 'hand1' in target_keys else 'index_thumb' if 'index' in target_keys else None
+    elif len(target_keys) == 1:
+        if 'door' in row['task'] or 'drawer' in row['task']:
+            return 'handle'
+        elif 'handle' in target_keys:
+            return 'one_hand'
+        elif 'index' in target_keys:
+            return 'index'
+        else:
+            assert 0 > 1, print(f'Row: {row} does not have extractable information' )
+    else:
+        assert 0 > 1, print(f'target keys is an unexpected length')
 
 def process_vlm_output(experiment, row: dict):
     #running the experiment uses csv dictreaders, so make sure that the input to this is a row of the reader of type dictionary
@@ -284,7 +319,7 @@ def calculate_iou_results(experiment: VisionExperiment|GeminiExperiment|OWLv2, p
                 (iou_1_0 + iou_2_1, 'pred1_to_hand1'),  # pred1->gt1, pred2->gt2
                 (iou_1_1 + iou_2_0, 'pred1_to_hand2')   # pred1->gt2, pred2->gt1
             ]
-            best_score, best_assignment = max(assignment_scores)
+            _, best_assignment = max(assignment_scores)
             print(f'{best_assignment=}')
             pred_boxes_reformatted_2 = {}
             ious = {}
