@@ -246,6 +246,70 @@ def process_owl_output(experiment, row: dict, prompt):
         assert 0 > 1, (print('target_keys is not an expected length'), print(target_keys), print(len(target_keys)), print(row['bboxes']))
 
 
+def calculate_iou_results(experiment: VisionExperiment|GeminiExperiment|OWLv2, pred_box_dict: dict, row: dict):
+    target_boxes = ast.literal_eval(row['bboxes'])
+    target_keys = list(target_boxes.keys())
+    target_keys: list[str] = [i.strip() for i in target_keys]
+    pred_boxes_reformatted = {}
+    if isinstance(experiment, GeminiExperiment):
+        pred_boxes_reformatted: dict[str, list] = {key: [pred[1]/1000, pred[0]/1000, pred[3]/1000, pred[2]/1000] for key, pred in pred_box_dict.items()}
+    else:
+        pred_boxes_reformatted = pred_box_dict
+    if len(target_keys) == 2:
+        if 'index' in target_keys:
+            #in this case, we only need to compare key by key
+            index_iou = get_iou(pred_boxes_reformatted['index'], target_boxes['index'])
+            thumb_iou = get_iou(pred_boxes_reformatted['thumb'], target_boxes['thumb'])
+            return pred_boxes_reformatted, {'index': index_iou, 'thumb': thumb_iou}
+        elif 'hand1' in target_keys:
+            calc_ious = []
+            for pred in pred_boxes_reformatted.values():
+                for gt in target_boxes.values():
+                    calc_ious.append(pred, [val for val in gt.values()])
+                    #gt is a dictioanry structured like this {x1: y1: x2: y2:}
+            iou_1_0 = calc_ious[0]
+            iou_1_1 = calc_ious[1]
+            iou_2_0 = calc_ious[2]
+            iou_2_1 = calc_ious[3]
+            assignment_scores = [
+                (iou_1_0 + iou_2_1, 'pred1_to_hand1'),  # pred1->gt1, pred2->gt2
+                (iou_1_1 + iou_2_0, 'pred1_to_hand2')   # pred1->gt2, pred2->gt1
+            ]
+            best_score, best_assignment = max(assignment_scores)
+            print(f'{best_assignment=}')
+            pred_boxes_reformatted_2 = {}
+            ious = {}
+            #reinitialize it so that we can now get the correct, cooresponding keys
+            if best_assignment == 'pred1_to_hand1':
+                pred_boxes_reformatted_2['hand1'] = pred_boxes_reformatted['hand1']
+                pred_boxes_reformatted_2['hand2'] = pred_boxes_reformatted['hand2']
+                ious['hand1'] = iou_1_0
+                ious['hand2'] = iou_2_1
+                print(f'1: {ious=}')  # Fixed syntax
+            else:
+                pred_boxes_reformatted_2['hand1'] = pred_boxes_reformatted['hand2']
+                pred_boxes_reformatted_2['hand2'] = pred_boxes_reformatted['hand1']
+                ious['hand1'] = iou_2_0
+                ious['hand2'] = iou_1_1
+            return pred_boxes_reformatted_2, ious
+        else:
+            if 'index' in target_keys:
+                iou = get_iou(pred_boxes_reformatted['index'], target_boxes['index'])
+                result_iou_dict = {'index': iou}
+            elif 'handle' in target_keys:
+                iou = get_iou(pred_boxes_reformatted['hand'], target_boxes['handle'])
+                result_iou_dict = {'hand': iou}
+            else:
+                assert 0 > 1, (print(target_keys), print(row['bboxes']), print('If it is a one handed object, then the annotaiton needs to be either hand or index'))
+            return pred_boxes_reformatted, result_iou_dict
+        
+
+
+            
+
+
+
+
 
 
 
