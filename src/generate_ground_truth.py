@@ -93,12 +93,10 @@ def generate_ground_truth(rf_json_path, output_path):
             x_max = x_max / int(img_data['width'])
             y_min = y_min / int(img_data['height'])
             y_max = y_max / int(img_data['height'])
-
             #save in standard format: top-left (x_1, y_1) to bottom-right (x_2, y_2)
             bboxes[grasp_type] = {'x_1': x_min,'y_1': y_min,'x_2': x_max,'y_2': y_max}
-            row['bboxes'] = bboxes
-            print(row)
-            # breakpoint()
+        row['bboxes'] = dict(sorted(bboxes.items()))
+        print(row)
         rows.append(row)
     print(rows)
     df = pd.DataFrame(rows)

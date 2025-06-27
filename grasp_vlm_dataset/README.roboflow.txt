@@ -1,8 +1,8 @@
 
-grasp_vlm - v5 2025-06-21 8:54am
+grasp_vlm - v6 2025-06-26 9:25pm
 ==============================
 
-This dataset was exported via roboflow.com on June 21, 2025 at 2:54 PM GMT
+This dataset was exported via roboflow.com on June 27, 2025 at 3:25 AM GMT
 
 Roboflow is an end-to-end computer vision platform that helps you
 * collaborate with your team on computer vision projects

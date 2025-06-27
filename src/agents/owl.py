@@ -55,7 +55,7 @@ class OWLv2:
         """
         #Preprocess inputs
         print(f"{img.shape=}")
-        inputs = self.processor(text=querries, images=img, return_tensors="pt", do_rescale=False)
+        inputs = self.processor(text=querries, images=img, return_tensors="pt", do_rescale=False, truncation=True, padding=True)
         inputs.to(self.device)
 
         #model forward pass
