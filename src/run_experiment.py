@@ -186,7 +186,7 @@ def process_vlm_output(experiment, row: dict):
                 continue
     else:
         #now we handle where the model did not produce any viable json output
-        target_keys = ast.literal_eval(row['bboxes']).keys()
+        target_keys = list(ast.literal_eval(row['bboxes']).keys())
         target_keys: list[str] = [i.strip() for i in target_keys]
         if len(target_keys) == 2:
             #this handles if there are two target bboxes that we need to fix
@@ -208,13 +208,45 @@ def process_vlm_output(experiment, row: dict):
     input_token_size, output_token_size = get_token_input_output_size(experiment, response)
     return new_text, pred_dict, input_token_size, output_token_size
 
-def process_owl_output(row: dict, prompt):
-    img = str(os.path.join('/home/mateo/Github/grasp_vlm', row['img_path']))
-    img = Image.open(img)
+def process_owl_output(experiment, row: dict, prompt):
+    img = Image.open(row['img_path'])
     img = T.ToTensor()(img)
-    print(prompt)
-    # breakpoint()
     bboxs = experiment.predict(img, prompt)
+    #we dont need to keep on trying to get a response out of owl if it doesnt work because it is deterministic, if that img and prompt do not work, then they will never work.
+    target_keys = list(ast.literal_eval(row['bboxes']).keys())
+    target_keys: list[str] = [i.strip() for i in target_keys]
+    if len(prompt) == 2:
+        try:
+            best_prompt_1  = bboxs[prompt[0]]['boxes'][torch.argmax(bboxs[prompt[0]]['scores'])]
+            #the prompts if its an index-thumb row are always structured index, thumb
+        except Exception:
+            best_prompt_1 = np.array([0, 0, 0, 0])
+        try:
+            best_prompt_2 = bboxs[prompt[1]]['boxes'][torch.argmax(bboxs[prompt[1]]['scores'])]
+        except Exception:
+            best_prompt_2 = np.array([0, 0, 0, 0])
+        if 'index' in target_keys:
+            return {'index': best_prompt_1, 'thumb': best_prompt_2}
+        elif 'hand1' in target_keys:
+            return {'hand1': best_prompt_1, 'hand2': best_prompt_2}
+        else:
+            assert 0 > 1, (print(target_keys, print(row['bboxes']), print(f'If it is a two handed object its gotta be either index-thumb or hand1-hand2')))
+    elif len(prompt) == 1:
+        try:
+            best_prompt_1 = bboxs[prompt[0]]['boxes'][torch.argmax(bboxs[prompt[0]]['scores'])]
+        except Exception:
+            best_prompt_1 = np.array([0, 0, 0, 0])
+        if 'index' in target_keys:
+            return {'index': best_prompt_1}
+        elif 'handle' in target_keys:
+            return {'hand': best_prompt_1}
+        else:
+            assert 0 > 1, (print(target_keys), print(row['bboxes']), print('If it is a one handed object, then the annotaiton needs to be either hand or index'))
+    else:
+        assert 0 > 1, (print('target_keys is not an expected length'), print(target_keys), print(len(target_keys)), print(row['bboxes']))
+
+
+
 
 
 
@@ -231,6 +263,7 @@ def get_token_input_output_size(experiment, response):
     else:
         assert 0 > 1, print(f"Experiment is not one on the expectd types: {GeminiExperiment, GrokExperiment, ClaudeExperiment, GPTExperiment} and is instead {type(experiment)}")
     return input_tokens, output_tokens
+
 def get_iou(bbox_a, bbox_b):
     if len(bbox_a) < 4:
         bbox_a = [0, 0, 0, 0]
