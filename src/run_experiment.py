@@ -96,6 +96,7 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                     #else just append the row
                     #just continue if we do not need to redo this row
                 #instead of appening the row here, we need to instead append the cooresponding read_df row
+                #so int
                     to_check_row = read_df[read_df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
                     print(f'{to_check_row=}')
                     breakpoint()
