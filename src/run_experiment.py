@@ -107,23 +107,43 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
             #add owl check and vlm_check
             #basic read and write, if a row doesnt exist, process, no changing
             for row in reader:
-                if get_file_check(str(row['img_path'])) in [get_file_check(i) for i in df['img_path'].astype(str).tolist()]:
-                    #since we had to reexport the dataset, the img_id order and .rf extensions all changed
+                # print(df[df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())])
+                # print(df['img_path'].astype(str).str.strip().apply(get_file_check))
+                # print(get_file_check(row['img_path'].strip()))
+                # breakpoint()
+                #ok wait so lets try this sequentially
+                try:
                     to_check_row = df[df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
+                except IndexError:
+                    print(df[df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())])
+                    print(df['img_path'].astype(str).str.strip().apply(get_file_check))
+                    print(get_file_check(row['img_path'].strip()))
+                    print(df['img_path'].astype(str).str.strip().apply(get_file_check))
+                    print(type(df['img_path'].astype(str).str.strip().apply(get_file_check)))
+                    if (df['img_path'].astype(str).str.strip().apply(get_file_check) == 'grasp_vlm_dataset/shovel7').any():
+                        print('aaa')
+                    else:
+                        print('bbb')
+                    breakpoint()
+
+                if (df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())).any():
+                    #since we had to reexport the dataset, the img_id order and .rf extensions all changed
+                    # to_check_row = df[df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
                     rows.append(to_check_row)
                     print(f"continuing")
                     continue
                 else:
                     if owl_experiment:
                         #ok so here we nened to do checks to basically keep old datasets consistent
+                        #oh wait so bsaically, we cant keep datasets consistent because the file path will always be different, so maybe we should try conforming it all to the new dataset
                         prompt = get_prompt_owl(row)
                         result = process_owl_output(experiment, row, prompt)
                         reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, result, row)
-                        row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'prompts': prompt}
+                        row = {'img_id': to_check_row['img_id'], 'img_path': to_check_row['img_path'], 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'prompts': prompt}
                     elif not owl_experiment:
                         new_response, pred_dict, input_tokens, output_tokens = process_vlm_output(experiment, row)
                         reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, pred_dict, row)
-                        row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'text_output': new_response, 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'input_tokens': input_tokens, 'output_tokens': output_tokens}
+                        row = {'img_id': to_check_row['img_id'], 'img_path': to_check_row['img_path'], 'text_output': new_response, 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'input_tokens': input_tokens, 'output_tokens': output_tokens}
                     else:
                         assert 0 > 1, print('this should never happen?!')
                     rows.append(row)
