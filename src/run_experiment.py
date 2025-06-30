@@ -68,11 +68,14 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
     save_pth = os.path.join('results', file_stem)
     with open(ground_truth_csv_path, 'r') as f:
         reader = csv.DictReader(f, delimiter=';')
-        if read_df:
+        if not read_df.empty:
             rows = []
             #this means that we want to change existing values for whatever reason
             for row in reader:
                 if extract_to_change_info(row) == to_change:
+                    print('aaaa')
+                    print(row)
+                    breakpoint()
                     #check to see if we want to redo this row
                     #if we do, process new results and append, otherwise, just continue
                     if owl_experiment:
@@ -88,14 +91,14 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                         assert 0 > 1, print('this should never happen?!')
                     #after this we append results
                     rows.append(row)
-                    pass
                 else:
                     #otherwise just append the current row that we are at and just continue
                     #else just append the row
-                    pass
                     #just continue if we do not need to redo this row
                 #instead of appening the row here, we need to instead append the cooresponding read_df row
                     to_check_row = read_df[read_df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
+                    print(f'{to_check_row=}')
+                    breakpoint()
                     #its a panda series so instead we need to apply the get_file_chekc to all the items
                     rows.append(to_check_row) 
                 df = pd.DataFrame(rows)
@@ -107,43 +110,28 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
             #add owl check and vlm_check
             #basic read and write, if a row doesnt exist, process, no changing
             for row in reader:
-                # print(df[df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())])
-                # print(df['img_path'].astype(str).str.strip().apply(get_file_check))
-                # print(get_file_check(row['img_path'].strip()))
-                # breakpoint()
-                #ok wait so lets try this sequentially
-                try:
-                    to_check_row = df[df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
-                except IndexError:
-                    print(df[df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())])
-                    print(df['img_path'].astype(str).str.strip().apply(get_file_check))
-                    print(get_file_check(row['img_path'].strip()))
-                    print(df['img_path'].astype(str).str.strip().apply(get_file_check))
-                    print(type(df['img_path'].astype(str).str.strip().apply(get_file_check)))
-                    if (df['img_path'].astype(str).str.strip().apply(get_file_check) == 'grasp_vlm_dataset/shovel7').any():
-                        print('aaa')
-                    else:
-                        print('bbb')
-                    breakpoint()
-
                 if (df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())).any():
                     #since we had to reexport the dataset, the img_id order and .rf extensions all changed
                     # to_check_row = df[df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
+                    try:
+                        to_check_row = to_check_row.iloc[0].to_dict()
+                    except IndexError:
+                        assert 0 > 1
                     rows.append(to_check_row)
+                    #maybe here we should just conform stale rows to the new version?
                     print(f"continuing")
                     continue
                 else:
                     if owl_experiment:
-                        #ok so here we nened to do checks to basically keep old datasets consistent
                         #oh wait so bsaically, we cant keep datasets consistent because the file path will always be different, so maybe we should try conforming it all to the new dataset
                         prompt = get_prompt_owl(row)
                         result = process_owl_output(experiment, row, prompt)
                         reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, result, row)
-                        row = {'img_id': to_check_row['img_id'], 'img_path': to_check_row['img_path'], 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'prompts': prompt}
+                        row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'prompts': prompt}
                     elif not owl_experiment:
                         new_response, pred_dict, input_tokens, output_tokens = process_vlm_output(experiment, row)
                         reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, pred_dict, row)
-                        row = {'img_id': to_check_row['img_id'], 'img_path': to_check_row['img_path'], 'text_output': new_response, 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'input_tokens': input_tokens, 'output_tokens': output_tokens}
+                        row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'text_output': new_response, 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'input_tokens': input_tokens, 'output_tokens': output_tokens}
                     else:
                         assert 0 > 1, print('this should never happen?!')
                     rows.append(row)
@@ -151,8 +139,6 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                     #append everything at the end
                 df = pd.DataFrame(rows)
                 df.to_csv(f'results/{file_stem}', sep=';', encoding='utf-8', index=False)
-                pass
-            pass
     
 def extract_to_change_info(row: dict):
     #if to change is not none, then we need a way to universally determine if we need to rerun that result
@@ -375,6 +361,6 @@ if __name__ == "__main__":
     # print(get_file_check('grasp_vlm_dataset/allen_0_jpg.rf.b6d447a95fec8e2839e23deffef838fc.jpg'))
 
 
-    rerun_experiment(GeminiExperiment('gemini-2.5-flash-lite-preview-06-17', get_prompt))
+    rerun_experiment(GeminiExperiment('gemini-2.5-flash-lite-preview-06-17', get_prompt), to_change='two_hand', old_path='results/gemini-2.5-flash-lite-preview-06-17.csv')
     #try to test Path.stem to see what it retrieves on a roboflow image with that whole .rfeifn3i0r3oi0ernjodno23rno1rn extenesion
     
