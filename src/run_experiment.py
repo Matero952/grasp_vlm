@@ -26,8 +26,8 @@ def get_prompt_owl(ground_truth_row):
             prompt_2 = f"Placement for thumb finger on the {row['tool']}"
         else:
             #two handed tool
-            prompt_1 = f'Where one entire hand can grab the {row['tool']} safely'
-            prompt_2 = f'Where another entire hand can grab the {row['tool']} safely'
+            prompt_1 = f"Where one entire hand can grab the {row['tool']} safely"
+            prompt_2 = f"Where another entire hand can grab the {row['tool']} safely"
         return [prompt_1, prompt_2]
     else:
         if row['tool'] in ['allen key', 'hammer', 'screwdriver', 'wrench', 'soldering iron'] or 'handle' in row['tool']:
