@@ -59,20 +59,15 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
         owl_experiment = False
     os.makedirs('results', exist_ok=True)
     file_stem = f'{experiment.model}' 
-    file_stem += f'_change_{to_change}' if to_change is not None else f''
-    file_stem += '.csv'
     if to_change is not None:
         assert os.path.exists(old_path), print(f'using to_change assumes that you have an old path that you are reading from and changing specific parts of, and {old_path} does not exist')
         read_df = pd.read_csv(old_path, sep=';')
         #read_df must be completed and have all 500 img ids!
     elif os.path.exists(f'results/{file_stem}.csv'):
         df = pd.read_csv(f'results/{file_stem}.csv', sep=';')
-    else:
-        if not owl_experiment:
-            df = pd.DataFrame(columns=['img_id', 'img_path', 'text_output', 'pred_bboxes', 'target_bboxes', 'ious', 'input_tokens', 'output_tokens'])
-        else:
-            df = pd.DataFrame(columns=['img_id', 'img_path', 'pred_bboxes', 'target_bboxes', 'ious', 'prompts'])
-    os.makedirs('results', exist_ok=True)
+    file_stem += f'_change_{to_change}' if to_change is not None else f''
+    file_stem += '.csv'
+    save_pth = os.path.join('results', file_stem)
     with open(ground_truth_csv_path, 'r') as f:
         reader = csv.DictReader(f, delimiter=';')
         if read_df:
@@ -105,7 +100,7 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                     to_check_row = read_df[read_df['img_id'].astype(str).str.strip() == row['img_id'].strip()].iloc[0].to_dict()
                     rows.append(to_check_row) 
                 df = pd.DataFrame(rows)
-                df.to_csv()
+                df.to_csv(save_pth, sep=';', encoding='utf-8', index=False)
                 # rows.append()
         elif df:
             rows = []
@@ -132,6 +127,8 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                     rows.append(row)
                     #generate model output
                     #append everything at the end
+                    df = pd.DataFrame(rows)
+                    df.to_csv(f'results/{file_stem}.csv', sep=';', encoding='utf-8')
                     pass
             pass
     
@@ -350,286 +347,9 @@ def sanitize_text(text):
     return f"{text.strip()}"
 
 if __name__ == "__main__":
-    # print(get_iou([0.11, 0.34, 0.47, 0], [0.372, 0.137, 0.49, 0.4225]))
-    # print(get_iou([0.32, 0.14, 0.47, 0.6], [0.372, 0.137, 0.49, 0.4225]))
-    # print(get_iou([0.1, 0.37, 0.52, 0.3], [0.119, 0.35, 0.2605, 0.406]))
-    # print(get_iou([0.32, 0.14, 0.47, 0.6], [0.119, 0.35, 0.2605, 0.406]))
-    # breakpoint()
-    
-    # model_list = ['results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307.csv', 'results/gemini-2.5-flash-lite-preview-06-17.csv',
-    #                                   'results/gemini-2.5-flash.csv', 'results/gemini-2.0-flash-lite.csv', 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano.csv',
-    #                                   'results/grok-2-vision-1212.csv', 'results/o4-mini.csv', 'results/owl_vit_prompt_1.csv', 'results/yolo_uniow_prompt_1.csv', 'results/yolo_world_prompt_1.csv']
-    # model_list = [Path(i).stem for i in model_list]
     with open('ground_truth_test.csv', 'r') as f:
         reader = csv.DictReader(f, delimiter=';')
         for row in reader:
             print(process_vlm_output(GeminiExperiment('gemini-2.5-flash-lite-preview-06-17', get_prompt), row))
             breakpoint()
-    # rerun_experiment(GeminiExperiment('gemini-2.5-flash-lite-preview-06-17', get_prompt), to_change='two_handed')
-
-    # rereun_experiment(GeminiExperiment('gemini-2.5-flash-lite-preview-06-17', get_prompt))
-# def rereun_experiment(experiment, ground_truth_csv_path='ground_truth_test.csv'):
-#     os.makedirs('results', exist_ok=True)
-#     new_df_path = os.path.join('results', f'{experiment.model}_2.csv')
-#     to_replace = ['chainsaw', 'bolt_cutters', 'shovel', 'multimeter', 'can_opener']
-#     if os.path.exists(f'results/{experiment.model}.csv'):
-#         print(True)
-#         # breakpoint()
-#         read_df = pd.read_csv(f'results/{experiment.model}.csv', sep=';')
-#         print(read_df)
-#         new_df = pd.DataFrame(columns=['img_id', 'img_path', 'text_output', 'pred_bboxes', 'target_bboxes', 'ious', 'input_tokens', 'output_tokens'])
-#         if isinstance(experiment, GeminiExperiment):
-#             delay = 5.2
-#         else:
-#             delay = 0.0
-#         counter = 0
-#         with open(ground_truth_csv_path, 'r') as f:
-#             reader = csv.DictReader(f, delimiter=';')
-#             for row in reader:
-#                 print(str(row['img_id']).strip())
-#                 print(read_df['img_id'].astype(str).values)
-#                 # breakpoint()
-#                 if str(row['img_id']).strip() in read_df['img_id'].astype(str).values:
-#                     print(f'True 2')
-#                     # breakpoint()
-#                     if any(i in str(row['img_path']).strip() for i in to_replace):
-#                         counter += 1
-#                         response, new_text  = experiment.process_sample(row['img_path'], row['tool'], row['vlm_role'], 
-#                                                                     experiment.model, row['task'], ast.literal_eval(row['bboxes']))
-#                         new_text = new_text.replace('\n', '')
-#                         new_text = re.sub(r'```json\s*', '```json', new_text)
-#                         new_text = re.sub(r'\s*```$', '```', new_text)
-#                         max_attempts = 3
-#                         for attempt in range(max_attempts):
-#                             pred_bboxes = re.search(r'\{(?:[^{}]|(?R))*\}', new_text)
-#                             if pred_bboxes is not None:
-#                                 pred_bboxes = pred_bboxes.group(0)
-#                                 try:
-#                                     clean_str = str(pred_bboxes).replace("{{", "[{").replace("}}", "}]")
-#                                     pred_bboxes = json.loads(clean_str)
-#                                     break
-#                                 # pred_bboxes = ast.literal_eval(str(pred_bboxes))
-#                                 except ValueError:
-#                                     print(f"ValueError malformed node or string")
-#                                     print(f'{pred_bboxes=}')
-#                                     print(f'{type(pred_bboxes)=}')
-#                                     print(new_text)
-#                         else:
-#                             if len(list(ast.literal_eval(row['bboxes']).keys())) > 1:
-#                                 if 'hand1' in list(ast.literal_eval(row['bboxes']).keys()):
-#                                     pred_bboxes = {'hand1': [0.0, 0.0, 0.0, 0.0], 'hand2': [0.0, 0.0, 0.0, 0.0]}
-#                                 elif 'index' in list(ast.literal_eval(row['bboxes']).keys()):
-#                                     pred_bboxes = {'index': [0.0, 0.0, 0.0, 0.0], 'thumb': [0.0, 0.0, 0.0, 0.0]}
-#                                 else:
-#                                     print('wtf')
-#                                     breakpoint()
-#                             else:
-#                                 if 'handle' in list(ast.literal_eval(row['bboxes']).keys()):
-#                                     pred_bboxes = {'hand': [0.0, 0.0, 0.0, 0.0]}
-#                                 elif 'index' in list(ast.literal_eval(row['bboxes']).keys()):
-#                                     pred_bboxes = {'index': [0.0, 0.0, 0.0, 0.0]}
-#                                 else:
-#                                     print('wtf2')
-#                                     breakpoint()
-#                         assert isinstance(pred_bboxes, dict), print(repr(pred_bboxes), type(pred_bboxes), repr(new_text))
-#                 # print(text)
-#                         ious = {}
-#                         pred_bboxes_reformat = {}
-#                         bboxes = ast.literal_eval(row['bboxes'])
-#                         print(pred_bboxes)
-#                         calc_ious = []
-#                         for pred in pred_bboxes.values():
-#                             for gt in bboxes.values():
-#                                 if isinstance(experiment, GeminiExperiment):
-#                                     pred = [pred[1]/1000, pred[0]/1000, pred[3]/1000, pred[2]/1000]
-#                                 print(gt)
-#                                 calc_ious.append(get_iou(pred, [i for i in gt.values()]))
-#                                 print(f'{get_iou(pred, [i for i in gt.values()])=}')
-#                         if sum(calc_ious) == 0:
-#                             pred_bboxes_reformat['hand1'] = list(pred_bboxes.values())[0]
-#                             pred_bboxes_reformat['hand2'] = list(pred_bboxes.values())[1]
-#                             iou_1_0 = calc_ious[0]
-#                             iou_1_1 = calc_ious[1]
-#                             iou_2_0 = calc_ious[2]
-#                             iou_2_1 = calc_ious[3]
-#                             assignment_scores = [
-#                                 (iou_1_0 + iou_2_1, 'pred1_to_hand1'),  # pred1->gt1, pred2->gt2
-#                                 (iou_1_1 + iou_2_0, 'pred1_to_hand2')   # pred1->gt2, pred2->gt1
-#                             ]
-#                         else:
-#                             pred1 = list(pred_bboxes.values())[0]
-#                             pred2 = list(pred_bboxes.values())[1]
-#                             iou_1_0 = calc_ious[0]  # pred1 vs gt1
-#                             iou_1_1 = calc_ious[1]  # pred1 vs gt2
-#                             iou_2_0 = calc_ious[2]  # pred2 vs gt1
-#                             iou_2_1 = calc_ious[3]  # pred2 vs gt2
-#                             assignment_scores = [
-#                                 (iou_1_0 + iou_2_1, 'pred1_to_hand1'),  # pred1->gt1, pred2->gt2
-#                                 (iou_1_1 + iou_2_0, 'pred1_to_hand2')   # pred1->gt2, pred2->gt1
-#                             ]
-
-#                             # Choose the assignment with higher total IoU
-#                         best_score, best_assignment = max(assignment_scores)
-#                         print(f'{best_assignment=}')
-
-#                         if best_assignment == 'pred1_to_hand1':
-#                             if isinstance(experiment, GeminiExperiment):
-#                                 pred_bboxes_reformat['hand1'] = [pred1[1]/1000, pred1[0]/1000, pred1[3]/1000, pred1[2]/1000]
-#                                 pred_bboxes_reformat['hand2'] = [pred2[1]/1000, pred2[0]/1000, pred2[3]/1000, pred2[2]/1000]
-#                             else:
-#                                 pred_bboxes_reformat['hand1'] = pred1
-#                                 pred_bboxes_reformat['hand2'] = pred2
-#                             ious['hand1'] = iou_1_0
-#                             ious['hand2'] = iou_2_1
-#                             print(f'1: {ious=}')  # Fixed syntax
-#                         else:
-#                             if isinstance(experiment, GeminiExperiment):
-#                                 pred_bboxes_reformat['hand1'] = [pred2[1]/1000, pred2[0]/1000, pred2[3]/1000, pred2[2]/1000]
-#                                 pred_bboxes_reformat['hand2'] = [pred1[1]/1000, pred1[0]/1000, pred1[3]/1000, pred1[2]/1000]
-#                             else:
-#                                 pred_bboxes_reformat['hand1'] = pred2
-#                                 pred_bboxes_reformat['hand2'] = pred1
-#                             ious['hand1'] = iou_2_0
-#                             ious['hand2'] = iou_1_1
-#                             print(f'2: {ious=}')  # Fixed syntax
-#                         print(ious)
-#                         if not ious:
-#                             assert 0 > 1
-
-
-#                         pred_bboxes_reformat = dict(sorted(pred_bboxes_reformat.items()))
-#                         ious = dict(sorted(ious.items()))
-#                         print(pred_bboxes_reformat)
-#                         print(ious)
-#                         # breakpoint()
-#                         if isinstance(experiment, GeminiExperiment):
-#                             input_tokens = response.usage_metadata.prompt_token_count
-#                             output_tokens = response.usage_metadata.candidates_token_count
-#                         elif isinstance(experiment, GPTExperiment):
-#                             input_tokens = response.usage.input_tokens
-#                             output_tokens = response.usage.output_tokens
-#                         elif isinstance(experiment, GrokExperiment):
-#                             input_tokens = response.usage.prompt_tokens
-#                             output_tokens = response.usage.completion_tokens
-#                         elif isinstance(experiment, ClaudeExperiment):
-#                             input_tokens = response.usage.input_tokens
-#                             output_tokens = response.usage.output_tokens
-#                         new_df.loc[len(new_df)] = [row['img_id'], row['img_path'], sanitize_text(new_text), pred_bboxes_reformat, row['bboxes'], ious, input_tokens, output_tokens]
-#                         new_df.to_csv(new_df_path, sep=';', encoding='utf-8', index=False)
-#                         time.sleep(delay)
-#                 else:
-#                     to_check_row = read_df[read_df['img_id'].astype(str).str.strip() == row['img_id'].strip()].iloc[0]
-#                     new_df.loc[len(new_df)] = [row['img_id'], row['img_path'], to_check_row['text_output'], to_check_row['pred_bboxes'], row['bboxes'], to_check_row['ious'], to_check_row['input_tokens'], to_check_row['output_tokens']]
-#             else:
-#                 print('wtf3')
-#                 breakpoint()
-
-# def run_experiment(experiment, ground_truth_csv_path):
-#     os.makedirs('results', exist_ok=True)
-#     new_df_path = os.path.join('results', f'{experiment.model}.csv')
-#     if os.path.exists(new_df_path):
-#         df = pd.read_csv(new_df_path, sep=';', encoding='utf-8')
-#         df.columns = df.columns.str.replace('"', '', regex=False)
-#     else:
-#         df = pd.DataFrame(columns=['img_id', 'img_path', 'text_output', 'pred_bboxes', 'target_bboxes', 'ious', 'input_tokens', 'output_tokens'])
-#     if isinstance(experiment, GeminiExperiment):
-#         delay = 5.2
-#     else:
-#         delay = 0
-#     with open(ground_truth_csv_path) as f:
-#         reader = csv.DictReader(f, delimiter=';')
-#         for row in reader:
-#             if str(row['img_id']) in df['img_id'].astype(str).values:
-#                 print(f"Skipping: {row['img_id']}")
-#                 continue
-#             else:
-#                 file_path = row['img_path']
-#                 tool = row['tool']
-#                 vlm_role = row['vlm_role']
-#                 model = experiment.model
-#                 task = row['task']
-#                 bboxes = ast.literal_eval(row['bboxes'])
-#                 response, text  = experiment.process_sample(file_path, tool, vlm_role, model, task, bboxes)
-#                 text = text.replace('\n', '')
-#                 text = re.sub(r'```json\s*', '```json', text)
-#                 text = re.sub(r'\s*```$', '```', text)
-#                 max_attempts = 3
-#                 for attempt in range(max_attempts):
-#                     pred_bboxes = re.search(r'\{(?:[^{}]|(?R))*\}', text)
-#                     if pred_bboxes is not None:
-#                         pred_bboxes = pred_bboxes.group(0)
-#                         try:
-#                             clean_str = str(pred_bboxes).replace("{{", "[{").replace("}}", "}]")
-#                             pred_bboxes = json.loads(clean_str)
-#                             break
-#                         # pred_bboxes = ast.literal_eval(str(pred_bboxes))
-#                         except ValueError:
-#                             print(f"ValueError malformed node or string")
-#                             print(f'{pred_bboxes=}')
-#                             print(f'{type(pred_bboxes)=}')
-#                             print(text)
-#                 else:
-#                     pred_bboxes = {'none_found': [0.0, 0.0, 0.0, 0.0], 'none_found': [0.0, 0.0, 0.0, 0.0]}
-#                     print(f"MAX ATTEMPT LIMIT: {max_attempts}, REACHED LOL")
-#                 # pred_bboxes = ast.literal_eval(pred_bboxes)
-
-#                 print(f'{pred_bboxes}=')
-#                 # print(f'{list(pred_bboxes.keys())=}')
-#                 # breakpoint()
-#                 assert isinstance(pred_bboxes, dict), print(repr(pred_bboxes), type(pred_bboxes), repr(text))
-#                 # print(text)
-#                 ious = {}
-#                 pred_bboxes_reformat = {}
-#                 for key, pred_bbox in pred_bboxes.items():
-#                     #vlms supposed to output in key value pairs, so im just checking the values of cooresponding keys
-#                     assert isinstance(key, str)
-#                     switch = False
-#                     for gt_key in bboxes.keys():
-#                         if key.lower().strip() in gt_key:
-#                             cooresponding_gt_bbox = bboxes[gt_key]
-#                             assert isinstance(cooresponding_gt_bbox, dict)
-#                             cooresponding_gt_bbox = list(cooresponding_gt_bbox.values())
-#                             switch = True
-#                     if not switch:
-#                         print(f'Model produced a bad key')
-#                         print(key)
-#                         cooresponding_gt_bbox = [0, 0, 0 ,0]
-#                     print(f'{cooresponding_gt_bbox=}')
-#                     # breakpoint()
-
-#                     if isinstance(experiment, GeminiExperiment):
-#                         pred_bbox = [pred_bbox[1]/1000, pred_bbox[0]/1000, pred_bbox[3]/1000, pred_bbox[2]/1000]
-#                         #switch from gemini format of yxyz to xyxy and renormalize from 0 - 1000 to 0 - 1
-#                         # cooresponding_gt_bbox = [cooresponding_gt_bbox[1], cooresponding_gt_bbox[0], 
-#                         #                        cooresponding_gt_bbox[3], cooresponding_gt_bbox[2]]
-#                         #switch to gemini format from yx yx to xy xy
-#                     else:
-#                         pass
-#                     pred_bboxes_reformat[key] = pred_bbox
-#                     iou = get_iou(pred_bbox, cooresponding_gt_bbox)
-#                     print(iou)
-#                     print(f'{pred_bbox=}')
-#                     print(f'{cooresponding_gt_bbox=}')
-#                     # breakpoint()
-#                     #iou assumes consistent format
-#                     ious[key.lower().strip()] = iou
-#                 if isinstance(experiment, GeminiExperiment):
-#                     input_tokens = response.usage_metadata.prompt_token_count
-#                     output_tokens = response.usage_metadata.candidates_token_count
-#                 elif isinstance(experiment, GPTExperiment):
-#                     input_tokens = response.usage.input_tokens
-#                     output_tokens = response.usage.output_tokens
-#                 elif isinstance(experiment, GrokExperiment):
-#                     input_tokens = response.usage.prompt_tokens
-#                     output_tokens = response.usage.completion_tokens
-#                 elif isinstance(experiment, ClaudeExperiment):
-#                     input_tokens = response.usage.input_tokens
-#                     output_tokens = response.usage.output_tokens
-#                 df.loc[len(df)] = [row['img_id'], row['img_path'], sanitize_text(text), pred_bboxes_reformat, row['bboxes'], ious, input_tokens, output_tokens]
-#                 df.to_csv(new_df_path, sep=';', encoding='utf-8', index=False)
-#                 time.sleep(delay)
-#             breakpoint()
-
-
-
     
