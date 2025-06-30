@@ -23,39 +23,30 @@ def get_prompt_owl(ground_truth_row):
         if row['tool'] in ['bowling ball', 'violin bow', 'syringe', 'dart', 'pair of scissors']:
             #index thumb finger tool
             prompt_1 = f"Placement for index finger on the {row['tool']}"
-            prompt_2 = f"Where another "
+            prompt_2 = f"Placement for thumb finger on the {row['tool']}"
         else:
             #two handed tool
             prompt_1 = f'Where one entire hand can grab the {row['tool']} safely'
             prompt_2 = f'Where another entire hand can grab the {row['tool']} safely'
-            match = re.search(r'-?\d+\.?\d*', row['img_path'])
-            if not match:
-                print(f"No number found.")
-                assert 0 > 1
-            file_numb = int(match.group(0))
-            if file_numb > 10:
-                #green star is closer to left hand
-                prompt_1 = f"Best placement near the green star for the entire left hand on the {row['tool']}"
-                prompt_2 = f"Best placement for the entire right hand on the {row['tool']}"
-            elif file_numb < 11:
-                prompt_1 = f"Best placement for the entire left hand on the {row['tool']}"
-                prompt_2 = f"Best placement near the green star for the entire right hand on the {row['tool']}"
-        return (prompt_1, prompt_2)
+        return [prompt_1, prompt_2]
     else:
         if row['tool'] in ['allen key', 'hammer', 'screwdriver', 'wrench', 'soldering iron'] or 'handle' in row['tool']:
             #handle tools:
             prompt = f"Where an entire hand can grab the {row['tool']} safely"
         else:
             prompt = f"Where the index finger can press on the {row['tool']} safely"
-        return prompt
+        return [prompt]
 
-def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_truth_csv_path='ground_truth_test.csv', to_change:str = None, old_path:str=None):
-    if experiment is None:
+def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|OWLv2|None, ground_truth_csv_path='ground_truth_test.csv', to_change:str = None, old_path:str=None):
+    if isinstance(experiment, OWLv2):
         owl_experiment = True
+        file_stem = 'owl_vit'
     else:
         owl_experiment = False
+        file_stem = f'{experiment.model}' 
     os.makedirs('results', exist_ok=True)
-    file_stem = f'{experiment.model}' 
+
+    # file_stem = f'{experiment.model}' 
     if to_change is not None:
         assert os.path.exists(old_path), print(f'using to_change assumes that you have an old path that you are reading from and changing specific parts of, and {old_path} does not exist')
         read_df = pd.read_csv(old_path, sep=';')
@@ -78,6 +69,8 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                     #if we do, process new results and append, otherwise, just continue
                     if owl_experiment:
                         prompt = get_prompt_owl(row)
+                        print(prompt)
+                        # breakpoint()
                         result = process_owl_output(experiment, row, prompt)
                         reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, result, row)
                         row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'prompts': prompt}
@@ -220,19 +213,26 @@ def process_owl_output(experiment, row: dict, prompt):
     img = Image.open(row['img_path'])
     img = T.ToTensor()(img)
     bboxs = experiment.predict(img, prompt)
+    print(bboxs)
+    # breakpoint()
     #we dont need to keep on trying to get a response out of owl if it doesnt work because it is deterministic, if that img and prompt do not work, then they will never work.
     target_keys = list(ast.literal_eval(row['bboxes']).keys())
     target_keys: list[str] = [i.strip() for i in target_keys]
     if len(prompt) == 2:
         try:
             best_prompt_1  = bboxs[prompt[0]]['boxes'][torch.argmax(bboxs[prompt[0]]['scores'])]
+            best_prompt_1 = [float(i)/1000 for i in best_prompt_1]
+            print(best_prompt_1)
             #the prompts if its an index-thumb row are always structured index, thumb
         except Exception:
-            best_prompt_1 = np.array([0, 0, 0, 0])
+            best_prompt_1 = [0, 0, 0, 0]
         try:
             best_prompt_2 = bboxs[prompt[1]]['boxes'][torch.argmax(bboxs[prompt[1]]['scores'])]
+            best_prompt_2 = [float(i)/1000 for i in best_prompt_2]
+            print(best_prompt_2)
         except Exception:
-            best_prompt_2 = np.array([0, 0, 0, 0])
+            best_prompt_2 = [0, 0, 0, 0]
+        
         if 'index' in target_keys:
             return {'index': best_prompt_1, 'thumb': best_prompt_2}
         elif 'hand1' in target_keys:
@@ -377,6 +377,6 @@ def sanitize_text(text):
 if __name__ == "__main__":
     # print(get_file_check('grasp_vlm_dataset/allen_0_jpg.rf.b6d447a95fec8e2839e23deffef838fc.jpg'))
     # rerun_experiment(GeminiExperiment('gemini-2.0-flash-lite', get_prompt), to_change='two_hand', old_path='results/gemini-2.0-flash-lite.csv')
-    rerun_experiment(GPTExperiment('gpt-4.1-nano', get_prompt), to_change='two_hand', old_path='results/gpt-4.1-nano.csv')
+    rerun_experiment(experiment=OWLv2(), to_change='two_hand', old_path='results/owl_vit_prompt_1.csv')
     #try to test Path.stem to see what it retrieves on a roboflow image with that whole .rfeifn3i0r3oi0ernjodno23rno1rn extenesion
     
