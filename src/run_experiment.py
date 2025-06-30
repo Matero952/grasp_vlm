@@ -62,6 +62,7 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
         #read_df must be completed and have all 500 img ids!
     elif os.path.exists(f'results/{file_stem}.csv'):
         df = pd.read_csv(f'results/{file_stem}.csv', sep=';')
+        read_df = None
     file_stem += f'_change_{to_change}' if to_change is not None else f''
     file_stem += '.csv'
     save_pth = os.path.join('results', file_stem)
@@ -99,7 +100,7 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                 df = pd.DataFrame(rows)
                 df.to_csv(save_pth, sep=';', encoding='utf-8', index=False)
                 # rows.append()
-        elif df:
+        elif not df.empty:
             rows = []
             #if we are not changing anything and just doing a basic read
             #add owl check and vlm_check
@@ -108,6 +109,7 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                 if str(row['img_id']) in df['img_id'].astype(str).values:
                     to_check_row = df[df['img_id'].astype(str).str.strip() == row['img_id'].strip()].iloc[0].to_dict()
                     rows.append(to_check_row)
+                    print(f"continuing")
                     continue
                 else:
                     if owl_experiment:
@@ -124,9 +126,9 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                     rows.append(row)
                     #generate model output
                     #append everything at the end
-                    df = pd.DataFrame(rows)
-                    df.to_csv(f'results/{file_stem}.csv', sep=';', encoding='utf-8')
-                    pass
+                df = pd.DataFrame(rows)
+                df.to_csv(f'results/{file_stem}', sep=';', encoding='utf-8')
+                pass
             pass
     
 
@@ -254,7 +256,7 @@ def calculate_iou_results(experiment: VisionExperiment|GeminiExperiment|OWLv2, p
             calc_ious = []
             for pred in pred_boxes_reformatted.values():
                 for gt in target_boxes.values():
-                    calc_ious.append(pred, [val for val in gt.values()])
+                    calc_ious.append(get_iou(pred, [val for val in gt.values()]))
                     #gt is a dictioanry structured like this {x1: y1: x2: y2:}
             iou_1_0 = calc_ious[0]
             iou_1_1 = calc_ious[1]
@@ -344,9 +346,6 @@ def sanitize_text(text):
     return f"{text.strip()}"
 
 if __name__ == "__main__":
-    with open('ground_truth_test.csv', 'r') as f:
-        reader = csv.DictReader(f, delimiter=';')
-        for row in reader:
-            print(process_vlm_output(GeminiExperiment('gemini-2.5-flash-lite-preview-06-17', get_prompt), row))
-            breakpoint()
+    rerun_experiment(GeminiExperiment('gemini-2.5-flash-lite-preview-06-17', get_prompt))
+    #try to test Path.stem to see what it retrieves on a roboflow image with that whole .rfeifn3i0r3oi0ernjodno23rno1rn extenesion
     
