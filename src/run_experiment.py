@@ -68,14 +68,12 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
     save_pth = os.path.join('results', file_stem)
     with open(ground_truth_csv_path, 'r') as f:
         reader = csv.DictReader(f, delimiter=';')
-        if not read_df.empty:
+        if read_df is not None and not read_df.empty:
+            # if not read_df.empty:
             rows = []
             #this means that we want to change existing values for whatever reason
             for row in reader:
                 if extract_to_change_info(row) == to_change:
-                    print('aaaa')
-                    print(row)
-                    breakpoint()
                     #check to see if we want to redo this row
                     #if we do, process new results and append, otherwise, just continue
                     if owl_experiment:
@@ -99,7 +97,7 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                 #so int
                     to_check_row = read_df[read_df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
                     print(f'{to_check_row=}')
-                    breakpoint()
+
                     #its a panda series so instead we need to apply the get_file_chekc to all the items
                     to_check_row['img_id'] = row['img_id']
                     to_check_row['img_path'] = row['img_path']
@@ -108,6 +106,7 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                 df.to_csv(save_pth, sep=';', encoding='utf-8', index=False)
                 # rows.append()
         elif not df.empty:
+            #how about instead here we just do the exact same thing as earlier
             rows = []
             #if we are not changing anything and just doing a basic read
             #add owl check and vlm_check
@@ -115,11 +114,13 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
             for row in reader:
                 if (df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())).any():
                     #since we had to reexport the dataset, the img_id order and .rf extensions all changed
-                    # to_check_row = df[df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
+                    to_check_row = df[df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())]
                     try:
                         to_check_row = to_check_row.iloc[0].to_dict()
                     except IndexError:
                         assert 0 > 1
+                    to_check_row['img_path'] = row['img_path']
+                    to_check_row['img_id'] = row['img_id']
                     rows.append(to_check_row)
                     #maybe here we should just conform stale rows to the new version?
                     print(f"continuing")
@@ -133,7 +134,17 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                         row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'prompts': prompt}
                     elif not owl_experiment:
                         new_response, pred_dict, input_tokens, output_tokens = process_vlm_output(experiment, row)
-                        reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, pred_dict, row)
+                        print(type(new_response))
+                        print(type(pred_dict))
+                        print(type(input_tokens))
+                        print(type(output_tokens))
+                        print(type(row))
+                        print(calculate_iou_results(experiment, pred_dict, row))
+                        try:
+                            reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, pred_dict, row)
+                        except TypeError:
+                            print(reformatted_bnd_boxes)
+                            print(result_iou_dict)
                         row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'text_output': new_response, 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'input_tokens': input_tokens, 'output_tokens': output_tokens}
                     else:
                         assert 0 > 1, print('this should never happen?!')
@@ -290,17 +301,17 @@ def calculate_iou_results(experiment: VisionExperiment|GeminiExperiment|OWLv2, p
                 ious['hand2'] = iou_1_1
             print(f'{pred_boxes_reformatted_2=}', f'{ious=}')
             return pred_boxes_reformatted_2, ious
+    else:
+        if 'index' in target_keys:
+            iou = get_iou(pred_boxes_reformatted['index'], [float(val) for val in target_boxes['index'].values()])
+            result_iou_dict = {'index': iou}
+        elif 'handle' in target_keys:
+            iou = get_iou(pred_boxes_reformatted['hand'], [float(val) for val in target_boxes['handle'].values()])
+            result_iou_dict = {'hand': iou}
         else:
-            if 'index' in target_keys:
-                iou = get_iou(pred_boxes_reformatted['index'], target_boxes['index'])
-                result_iou_dict = {'index': iou}
-            elif 'handle' in target_keys:
-                iou = get_iou(pred_boxes_reformatted['hand'], target_boxes['handle'])
-                result_iou_dict = {'hand': iou}
-            else:
-                assert 0 > 1, (print(target_keys), print(row['bboxes']), print('If it is a one handed object, then the annotaiton needs to be either hand or index'))
-            print(f'{pred_boxes_reformatted=}', f'{result_iou_dict=}')
-            return pred_boxes_reformatted, result_iou_dict
+            assert 0 > 1, (print(target_keys), print(row['bboxes']), print('If it is a one handed object, then the annotaiton needs to be either hand or index'))
+        print(f'{pred_boxes_reformatted=}', f'{result_iou_dict=}')
+        return pred_boxes_reformatted, result_iou_dict
 
 def get_token_input_output_size(experiment, response):
     if isinstance(experiment, GeminiExperiment):
@@ -324,6 +335,9 @@ def get_iou(bbox_a, bbox_b):
     x1_1, y1_1, x2_1, y2_1 = bbox_a
     x1_2, y1_2, x2_2, y2_2 = bbox_b    
     #get intersection coordinates
+    x1_1, y1_1, x2_1, y2_1 = float(x1_1), float(y1_1), float(x2_1), float(y2_1)
+    x1_2, y1_2, x2_2, y2_2 = float(x1_2), float(y1_2), float(x2_2), float(y2_2)
+
     x1_inter = max(x1_1, x1_2)
     y1_inter = max(y1_1, y1_2)
     x2_inter = min(x2_1, x2_2)
@@ -362,8 +376,7 @@ def sanitize_text(text):
 
 if __name__ == "__main__":
     # print(get_file_check('grasp_vlm_dataset/allen_0_jpg.rf.b6d447a95fec8e2839e23deffef838fc.jpg'))
-
-
-    rerun_experiment(GeminiExperiment('gemini-2.5-flash-lite-preview-06-17', get_prompt), to_change='two_hand', old_path='results/gemini-2.5-flash-lite-preview-06-17.csv')
+    # rerun_experiment(GeminiExperiment('gemini-2.0-flash-lite', get_prompt), to_change='two_hand', old_path='results/gemini-2.0-flash-lite.csv')
+    rerun_experiment(GPTExperiment('gpt-4.1-nano', get_prompt), to_change='two_hand', old_path='results/gpt-4.1-nano.csv')
     #try to test Path.stem to see what it retrieves on a roboflow image with that whole .rfeifn3i0r3oi0ernjodno23rno1rn extenesion
     
