@@ -101,6 +101,8 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                     print(f'{to_check_row=}')
                     breakpoint()
                     #its a panda series so instead we need to apply the get_file_chekc to all the items
+                    to_check_row['img_id'] = row['img_id']
+                    to_check_row['img_path'] = row['img_path']
                     rows.append(to_check_row) 
                 df = pd.DataFrame(rows)
                 df.to_csv(save_pth, sep=';', encoding='utf-8', index=False)
