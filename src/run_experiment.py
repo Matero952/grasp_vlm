@@ -16,9 +16,6 @@ import numpy as np
 from pathlib import Path
 import json
 from agents.claude_grok import VisionExperiment
-tool_dict_for_yolo_1 = {'drill' : 'drill tool', 'wacker' : 'weed wacker', 'glue' : 'glue gun tool', 'saw' : 'circular saw', 'nail' : 'nail gun', 
-    'screwdriver' : 'screwdriver', 'wrench' : 'wrench tool', 'solder' : 'solder iron tool', 'allen' : 'allen wrench tool', 'hammer' : 'hammer'}
-tool_regex = r'drill|wacker|glue|saw|nail|screwdriver|wrench|solder|allen|hammer'
 
 def get_prompt_owl(ground_truth_row):
     row = ground_truth_row
