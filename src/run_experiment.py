@@ -95,7 +95,8 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                     pass
                     #just continue if we do not need to redo this row
                 #instead of appening the row here, we need to instead append the cooresponding read_df row
-                    to_check_row = read_df[get_file_check(read_df['img_path'].astype(str).str.strip()) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
+                    to_check_row = read_df[read_df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
+                    #its a panda series so instead we need to apply the get_file_chekc to all the items
                     rows.append(to_check_row) 
                 df = pd.DataFrame(rows)
                 df.to_csv(save_pth, sep=';', encoding='utf-8', index=False)
@@ -108,12 +109,13 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
             for row in reader:
                 if get_file_check(str(row['img_path'])) in [get_file_check(i) for i in df['img_path'].astype(str).tolist()]:
                     #since we had to reexport the dataset, the img_id order and .rf extensions all changed
-                    to_check_row = df[get_file_check(df['img_path'].astype(str).str.strip()) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
+                    to_check_row = df[df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
                     rows.append(to_check_row)
                     print(f"continuing")
                     continue
                 else:
                     if owl_experiment:
+                        #ok so here we nened to do checks to basically keep old datasets consistent
                         prompt = get_prompt_owl(row)
                         result = process_owl_output(experiment, row, prompt)
                         reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, result, row)
@@ -128,16 +130,10 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                     #generate model output
                     #append everything at the end
                 df = pd.DataFrame(rows)
-                df.to_csv(f'results/{file_stem}', sep=';', encoding='utf-8')
+                df.to_csv(f'results/{file_stem}', sep=';', encoding='utf-8', index=False)
                 pass
             pass
     
-
-
-
-
-    
-
 def extract_to_change_info(row: dict):
     #if to change is not none, then we need a way to universally determine if we need to rerun that result
     target_boxes = ast.literal_eval(row['bboxes'])
@@ -283,6 +279,7 @@ def calculate_iou_results(experiment: VisionExperiment|GeminiExperiment|OWLv2, p
                 pred_boxes_reformatted_2['hand2'] = pred_boxes_reformatted['hand1']
                 ious['hand1'] = iou_2_0
                 ious['hand2'] = iou_1_1
+            print(f'{pred_boxes_reformatted_2=}', f'{ious=}')
             return pred_boxes_reformatted_2, ious
         else:
             if 'index' in target_keys:
@@ -293,6 +290,7 @@ def calculate_iou_results(experiment: VisionExperiment|GeminiExperiment|OWLv2, p
                 result_iou_dict = {'hand': iou}
             else:
                 assert 0 > 1, (print(target_keys), print(row['bboxes']), print('If it is a one handed object, then the annotaiton needs to be either hand or index'))
+            print(f'{pred_boxes_reformatted=}', f'{result_iou_dict=}')
             return pred_boxes_reformatted, result_iou_dict
 
 def get_token_input_output_size(experiment, response):
