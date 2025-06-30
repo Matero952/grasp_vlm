@@ -95,7 +95,7 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
                     pass
                     #just continue if we do not need to redo this row
                 #instead of appening the row here, we need to instead append the cooresponding read_df row
-                    to_check_row = read_df[read_df['img_id'].astype(str).str.strip() == row['img_id'].strip()].iloc[0].to_dict()
+                    to_check_row = read_df[get_file_check(read_df['img_path'].astype(str).str.strip()) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
                     rows.append(to_check_row) 
                 df = pd.DataFrame(rows)
                 df.to_csv(save_pth, sep=';', encoding='utf-8', index=False)
@@ -106,8 +106,9 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|None, ground_
             #add owl check and vlm_check
             #basic read and write, if a row doesnt exist, process, no changing
             for row in reader:
-                if str(row['img_id']) in df['img_id'].astype(str).values:
-                    to_check_row = df[df['img_id'].astype(str).str.strip() == row['img_id'].strip()].iloc[0].to_dict()
+                if get_file_check(str(row['img_path'])) in [get_file_check(i) for i in df['img_path'].astype(str).tolist()]:
+                    #since we had to reexport the dataset, the img_id order and .rf extensions all changed
+                    to_check_row = df[get_file_check(df['img_path'].astype(str).str.strip()) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
                     rows.append(to_check_row)
                     print(f"continuing")
                     continue
@@ -335,6 +336,13 @@ def get_iou(bbox_a, bbox_b):
     iou = intersection_area / union_area
     return iou
 
+def get_file_check(file):
+    result = re.split(r'_jpg|_JPG|_jpeg|_JPEG|_cleanup|\.rf', file)[0]
+    #basically, since we reexported the dataset after changing all of the green stars, all of the .rf extensions got changed, so now, im just checking to see cooresponding paths.
+    assert result is not None, print('file check gone wrong')
+    return result
+
+
 def sanitize_text(text):
     text = re.sub(r'\s+', ' ', text)
     text = text.replace('"', '')
@@ -346,6 +354,9 @@ def sanitize_text(text):
     return f"{text.strip()}"
 
 if __name__ == "__main__":
+    # print(get_file_check('grasp_vlm_dataset/allen_0_jpg.rf.b6d447a95fec8e2839e23deffef838fc.jpg'))
+
+
     rerun_experiment(GeminiExperiment('gemini-2.5-flash-lite-preview-06-17', get_prompt))
     #try to test Path.stem to see what it retrieves on a roboflow image with that whole .rfeifn3i0r3oi0ernjodno23rno1rn extenesion
     
