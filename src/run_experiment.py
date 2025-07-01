@@ -7,15 +7,21 @@ import pandas as pd
 import csv
 import regex as re
 import ast
-import time
 import numpy as np
 from agents.owl import *
 from PIL import Image
 import torchvision.transforms as T
 import numpy as np
-from pathlib import Path
 import json
 from agents.claude_grok import VisionExperiment
+def run_grasp_vlm_experiment(experiment_list:list[GeminiExperiment|VisionExperiment|OWLv2]):
+    pth_list = []
+    for experiment in experiment_list:
+        save_pth = run_experiment(experiment)
+        
+
+
+
 
 def get_prompt_owl(ground_truth_row):
     row = ground_truth_row
@@ -37,7 +43,8 @@ def get_prompt_owl(ground_truth_row):
             prompt = f"Where the index finger can press on the {row['tool']} safely"
         return [prompt]
 
-def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|OWLv2|None, ground_truth_csv_path='ground_truth_test.csv', to_change:str = None, old_path:str=None):
+
+def run_experiment(experiment: GeminiExperiment|VisionExperiment|OWLv2, ground_truth_csv_path='ground_truth_test.csv'):
     if isinstance(experiment, OWLv2):
         owl_experiment = True
         file_stem = 'owl_vit'
@@ -45,126 +52,47 @@ def rerun_experiment(experiment: GeminiExperiment|VisionExperiment|OWLv2|None, g
         owl_experiment = False
         file_stem = f'{experiment.model}' 
     os.makedirs('results', exist_ok=True)
-
-    # file_stem = f'{experiment.model}' 
-    if to_change is not None:
-        assert os.path.exists(old_path), print(f'using to_change assumes that you have an old path that you are reading from and changing specific parts of, and {old_path} does not exist')
-        read_df = pd.read_csv(old_path, sep=';')
-        #read_df must be completed and have all 500 img ids!
-    elif os.path.exists(f'results/{file_stem}.csv'):
-        df = pd.read_csv(f'results/{file_stem}.csv', sep=';')
-        read_df = None
-    file_stem += f'_change_{to_change}' if to_change is not None else f''
     file_stem += '.csv'
     save_pth = os.path.join('results', file_stem)
+    if os.path.exists(save_pth):
+        df = pd.read_csv(save_pth, sep=';', encoding='utf-8')
+        df.columns = df.columns.str.replace('"', '', regex=False)
+    else:
+        if not owl_experiment:
+            df = pd.DataFrame(columns=["img_id", "img_path", "text_output", "pred_bboxes", "target_bboxes", "ious", "input_tokens", "output_tokens"])
+        else:
+            df = pd.DataFrame(columns=["img_id", "img_path", "pred_bboxes", "target_bboxes", "ious", "prompts"])
     with open(ground_truth_csv_path, 'r') as f:
         reader = csv.DictReader(f, delimiter=';')
-        if read_df is not None and not read_df.empty:
-            # if not read_df.empty:
-            rows = []
-            #this means that we want to change existing values for whatever reason
-            for row in reader:
-                if extract_to_change_info(row) == to_change:
-                    #check to see if we want to redo this row
-                    #if we do, process new results and append, otherwise, just continue
-                    if owl_experiment:
-                        prompt = get_prompt_owl(row)
-                        print(prompt)
-                        # breakpoint()
-                        result = process_owl_output(experiment, row, prompt)
-                        reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, result, row)
-                        row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'prompts': prompt}
-                    elif not owl_experiment:
-                        new_response, pred_dict, input_tokens, output_tokens = process_vlm_output(experiment, row)
-                        reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, pred_dict, row)
-                        row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'text_output': new_response, 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'input_tokens': input_tokens, 'output_tokens': output_tokens}
-                    else:
-                        assert 0 > 1, print('this should never happen?!')
-                    #after this we append results
-                    rows.append(row)
-                else:
-                    #otherwise just append the current row that we are at and just continue
-                    #else just append the row
-                    #just continue if we do not need to redo this row
-                #instead of appening the row here, we need to instead append the cooresponding read_df row
-                #so int
-                    to_check_row = read_df[read_df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())].iloc[0].to_dict()
-                    print(f'{to_check_row=}')
-
-                    #its a panda series so instead we need to apply the get_file_chekc to all the items
-                    to_check_row['img_id'] = row['img_id']
-                    to_check_row['img_path'] = row['img_path']
-                    rows.append(to_check_row) 
-                df = pd.DataFrame(rows)
-                df.to_csv(save_pth, sep=';', encoding='utf-8', index=False)
-                # rows.append()
-        elif not df.empty:
-            #how about instead here we just do the exact same thing as earlier
-            rows = []
-            #if we are not changing anything and just doing a basic read
-            #add owl check and vlm_check
-            #basic read and write, if a row doesnt exist, process, no changing
-            for row in reader:
-                if (df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())).any():
-                    #since we had to reexport the dataset, the img_id order and .rf extensions all changed
-                    to_check_row = df[df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())]
+        for row in reader:
+            if (df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())).any():
+                #since we had to reexport the dataset, the img_id order and .rf extensions all changed, so the safest way to check if it has been done before is through the file name
+                to_check_row = df[df['img_path'].astype(str).str.strip().apply(get_file_check) == get_file_check(row['img_path'].strip())]
+                try:
+                    to_check_row = to_check_row.iloc[0].to_dict()
+                except IndexError:
+                    assert 0 > 1
+                print(f"continuing")
+                continue
+            else:
+                if owl_experiment:
+                    prompt = get_prompt_owl(row)
+                    result = process_owl_output(experiment, row, prompt)
+                    reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, result, row)
+                    df.loc[len(df)] = [row['img_id'], row['img_path'], reformatted_bnd_boxes, row['bboxes'], result_iou_dict, prompt]
+                elif not owl_experiment:
+                    new_response, pred_dict, input_tokens, output_tokens = process_vlm_output(experiment, row)
                     try:
-                        to_check_row = to_check_row.iloc[0].to_dict()
-                    except IndexError:
-                        assert 0 > 1
-                    to_check_row['img_path'] = row['img_path']
-                    to_check_row['img_id'] = row['img_id']
-                    rows.append(to_check_row)
-                    #maybe here we should just conform stale rows to the new version?
-                    print(f"continuing")
-                    continue
+                        reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, pred_dict, row)
+                    except TypeError:
+                        print(reformatted_bnd_boxes)
+                        print(result_iou_dict)
+                    df.loc[len(df)] = [row['img_id'], row['img_path'], new_response, reformatted_bnd_boxes, row['bboxes'], result_iou_dict, input_tokens, output_tokens]
                 else:
-                    if owl_experiment:
-                        #oh wait so bsaically, we cant keep datasets consistent because the file path will always be different, so maybe we should try conforming it all to the new dataset
-                        prompt = get_prompt_owl(row)
-                        result = process_owl_output(experiment, row, prompt)
-                        reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, result, row)
-                        row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'prompts': prompt}
-                    elif not owl_experiment:
-                        new_response, pred_dict, input_tokens, output_tokens = process_vlm_output(experiment, row)
-                        print(type(new_response))
-                        print(type(pred_dict))
-                        print(type(input_tokens))
-                        print(type(output_tokens))
-                        print(type(row))
-                        print(calculate_iou_results(experiment, pred_dict, row))
-                        try:
-                            reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, pred_dict, row)
-                        except TypeError:
-                            print(reformatted_bnd_boxes)
-                            print(result_iou_dict)
-                        row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'text_output': new_response, 'pred_bboxes': reformatted_bnd_boxes, 'target_bboxes': row['bboxes'], 'ious': result_iou_dict, 'input_tokens': input_tokens, 'output_tokens': output_tokens}
-                    else:
-                        assert 0 > 1, print('this should never happen?!')
-                    rows.append(row)
-                    #generate model output
-                    #append everything at the end
-                df = pd.DataFrame(rows)
+                    assert 0 > 1, print('this should never happen?!')
                 df.to_csv(f'results/{file_stem}', sep=';', encoding='utf-8', index=False)
-    
-def extract_to_change_info(row: dict):
-    #if to change is not none, then we need a way to universally determine if we need to rerun that result
-    target_boxes = ast.literal_eval(row['bboxes'])
-    target_keys = list(target_boxes.keys())
-    target_keys: list[str] = [i.strip() for i in target_keys]
-    if len(target_keys) == 2:
-        return 'two_hand' if 'hand1' in target_keys else 'index_thumb' if 'index' in target_keys else None
-    elif len(target_keys) == 1:
-        if 'door' in row['task'] or 'drawer' in row['task']:
-            return 'handle'
-        elif 'handle' in target_keys:
-            return 'one_hand'
-        elif 'index' in target_keys:
-            return 'index'
-        else:
-            assert 0 > 1, print(f'Row: {row} does not have extractable information' )
-    else:
-        assert 0 > 1, print(f'target keys is an unexpected length')
+    return save_pth
+
 
 def process_vlm_output(experiment, row: dict):
     #running the experiment uses csv dictreaders, so make sure that the input to this is a row of the reader of type dictionary
@@ -280,20 +208,22 @@ def calculate_iou_results(experiment: VisionExperiment|GeminiExperiment|OWLv2, p
             iou_2_0 = calc_ious[2]
             iou_2_1 = calc_ious[3]
             assignment_scores = [
-                (iou_1_0 + iou_2_1, 'pred1_to_hand1'),  # pred1->gt1, pred2->gt2
-                (iou_1_1 + iou_2_0, 'pred1_to_hand2')   # pred1->gt2, pred2->gt1
+                (iou_1_0 + iou_2_1, 'pred1_to_hand1'),
+                #pred1->gt1, pred2->gt2
+                (iou_1_1 + iou_2_0, 'pred1_to_hand2')
+                #pred1->gt2, pred2->gt1
             ]
             _, best_assignment = max(assignment_scores)
             print(f'{best_assignment=}')
             pred_boxes_reformatted_2 = {}
             ious = {}
-            #reinitialize it so that we can now get the correct, cooresponding keys
+            #we want the correct corresponding keys for our csv
             if best_assignment == 'pred1_to_hand1':
                 pred_boxes_reformatted_2['hand1'] = pred_boxes_reformatted['hand1']
                 pred_boxes_reformatted_2['hand2'] = pred_boxes_reformatted['hand2']
                 ious['hand1'] = iou_1_0
                 ious['hand2'] = iou_2_1
-                print(f'1: {ious=}')  # Fixed syntax
+                print(f'1: {ious=}')
             else:
                 pred_boxes_reformatted_2['hand1'] = pred_boxes_reformatted['hand2']
                 pred_boxes_reformatted_2['hand2'] = pred_boxes_reformatted['hand1']
@@ -324,7 +254,7 @@ def get_token_input_output_size(experiment, response):
         input_tokens = response.usage.input_tokens
         output_tokens = response.usage.output_tokens
     else:
-        assert 0 > 1, print(f"Experiment is not one on the expectd types: {GeminiExperiment, GrokExperiment, ClaudeExperiment, GPTExperiment} and is instead {type(experiment)}")
+        assert 0 > 1, print(f"Experiment is not one on the expectd types: {GeminiExperiment, VisionExperiment} and is instead {type(experiment)}")
     return input_tokens, output_tokens
 
 def get_iou(bbox_a, bbox_b):
@@ -375,8 +305,7 @@ def sanitize_text(text):
     return f"{text.strip()}"
 
 if __name__ == "__main__":
-    # print(get_file_check('grasp_vlm_dataset/allen_0_jpg.rf.b6d447a95fec8e2839e23deffef838fc.jpg'))
-    # rerun_experiment(GeminiExperiment('gemini-2.0-flash-lite', get_prompt), to_change='two_hand', old_path='results/gemini-2.0-flash-lite.csv')
-    rerun_experiment(experiment=OWLv2(), to_change='two_hand', old_path='results/owl_vit_prompt_1.csv')
-    #try to test Path.stem to see what it retrieves on a roboflow image with that whole .rfeifn3i0r3oi0ernjodno23rno1rn extenesion
+    run_experiment(experiment=OWLv2())
+
+
     

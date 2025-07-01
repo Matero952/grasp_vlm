@@ -123,7 +123,6 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'
     # tool_cycle = next(tool_cycle)
     df = pd.read_csv(csv_path, sep=';')
     df.columns = df.columns.str.replace('"', '', regex=False)
-    df.columns = df.columns.str.replace(' ', '', regex=False)
     gt = pd.read_csv(gt_file, sep=';')
     gt.columns = gt.columns.str.replace('"', '', regex=False)
     imgs = []
