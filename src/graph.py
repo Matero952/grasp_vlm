@@ -209,15 +209,15 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'
             axes[idx].text(0.5, -0.1, os.path.basename(row['img_path']), transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
             axes[idx].text(0.5, -0.18, f"IoU: {row['ious']}", transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
             if 'index' in ast.literal_eval(row['pred_bboxes']).keys():
-                axes[idx].text(pred_x1, pred_y1 - 0.04,'Pred: index',color='red',fontsize=9,backgroundcolor='white')
-                axes[idx].text(pred2_x1, pred2_y1 - 0.04,'Pred: thumb',color='red',fontsize=9,backgroundcolor='white')
-                axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: index',color='lime',fontsize=9,backgroundcolor='white')
-                axes[idx].text(gt2_x1, gt2_y1 - 0.04,'GT: thumb',color='lime',fontsize=9,backgroundcolor='white')
-            elif 'left' in ast.literal_eval(row['pred_bboxes']).keys():
-                axes[idx].text(pred_x1, pred_y1 - 0.04,'Pred: left',color='red',fontsize=9,backgroundcolor='white')
-                axes[idx].text(pred2_x1, pred2_y1 - 0.04,'Pred: right',color='red',fontsize=9,backgroundcolor='white')
-                axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: left',color='lime',fontsize=9,backgroundcolor='white')
-                axes[idx].text(gt2_x1, gt2_y1 - 0.04,'GT: right',color='lime',fontsize=9,backgroundcolor='white')
+                axes[idx].text(pred_x1, pred_y1 - 0.04,'Pred: index',color='red',fontsize=7,backgroundcolor='white')
+                axes[idx].text(pred2_x1, pred2_y1 - 0.04,'Pred: thumb',color='red',fontsize=7,backgroundcolor='white')
+                axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: index',color='lime',fontsize=7,backgroundcolor='white')
+                axes[idx].text(gt2_x1, gt2_y1 - 0.04,'GT: thumb',color='lime',fontsize=7,backgroundcolor='white')
+            elif 'hand1' in ast.literal_eval(row['pred_bboxes']).keys():
+                axes[idx].text(pred_x1, pred_y1 - 0.04,'Pred: hand1',color='red',fontsize=7,backgroundcolor='white')
+                axes[idx].text(pred2_x1, pred2_y1 - 0.04,'Pred: hand2',color='red',fontsize=7,backgroundcolor='white')
+                axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: hand1',color='lime',fontsize=7,backgroundcolor='white')
+                axes[idx].text(gt2_x1, gt2_y1 - 0.04,'GT: hand2',color='lime',fontsize=7,backgroundcolor='white')
             elif 'none_found' in ast.literal_eval(row['pred_bboxes']).keys():
                 continue
             else:
@@ -252,11 +252,11 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'
             axes[idx].text(0.5, -0.1, os.path.basename(row['img_path']), transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
             axes[idx].text(0.5, -0.18, f"IoU: {row['ious']}", transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
             if 'hand' in ast.literal_eval(row['pred_bboxes']).keys():
-                axes[idx].text(pred_x1, pred_y1 - 0.02,'Pred: hand',color='red',fontsize=9,backgroundcolor='white')
-                axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: hand',color='lime',fontsize=9,backgroundcolor='white')
+                axes[idx].text(pred_x1, pred_y1 - 0.02,'Pred: hand',color='red',fontsize=7,backgroundcolor='white')
+                axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: hand',color='lime',fontsize=7,backgroundcolor='white')
             elif 'index' in ast.literal_eval(row['pred_bboxes']).keys():
-                axes[idx].text(pred_x1, pred_y1 - 0.04,'Pred: index',color='red',fontsize=9,backgroundcolor='white')
-                axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: index',color='lime',fontsize=9,backgroundcolor='white')
+                axes[idx].text(pred_x1, pred_y1 - 0.04,'Pred: index',color='red',fontsize=7,backgroundcolor='white')
+                axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: index',color='lime',fontsize=7,backgroundcolor='white')
             elif 'none_found' in ast.literal_eval(row['pred_bboxes']).keys():
                 continue
             else:
@@ -268,8 +268,8 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'
         for j in range(idx + 1, len(axes)):
             axes[j].axis('off') 
     model_name = Path(csv_path).stem
-    plt.suptitle(f'Prediction Grid for {model_name}', fontsize=45, y= 0.99)
-    plt.legend(f'Red = {model_name}, Green = Ground Truth')
+    plt.suptitle(f'Grasp Prediction Grid for {model_name}', fontsize=45, y= 0.99)
+    # plt.legend(f'Red = {model_name}, Green = Groun  d Truth')
     plt.tight_layout()
     red_patch = patches.Patch(color='red', label=f'Red = {model_name}')
     green_patch = patches.Patch(color='lime', label='Green = Ground Truth')
@@ -288,9 +288,10 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'
   
 
 if __name__ == "__main__":
-    model_list = ['results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307.csv', 'results/gemini-2.5-flash-lite-preview-06-17.csv',
-                                      'results/gemini-2.5-flash.csv', 'results/gemini-2.0-flash-lite.csv', 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano.csv',
-                                      'results/grok-2-vision-1212.csv', 'results/o4-mini.csv', 'results/owl_vit_prompt_1.csv', 'results/yolo_uniow_prompt_1.csv', 'results/yolo_world_prompt_1.csv']
+    # model_list = ['results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307.csv', 'results/gemini-2.5-flash-lite-preview-06-17.csv',
+    #                                   'results/gemini-2.5-flash.csv', 'results/gemini-2.0-flash-lite.csv', 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano.csv',
+    #                                   'results/grok-2-vision-1212.csv', 'results/o4-mini.csv', 'results/owl_vit_prompt_1.csv', 'results/yolo_uniow_prompt_1.csv', 'results/yolo_world_prompt_1.csv']
     # for i in model_list:
     #     plot_prediction_grid(i, 64)
-    plot_box_and_whiskers_comparison(model_list)
+    # plot_box_and_whiskers_comparison(model_list)
+    plot_prediction_grid('results/yolo_uniow.csv', 64)

@@ -14,11 +14,17 @@ import torchvision.transforms as T
 import numpy as np
 import json
 from agents.claude_grok import VisionExperiment
+from graph import *
 def run_grasp_vlm_experiment(experiment_list:list[GeminiExperiment|VisionExperiment|OWLv2]):
     pth_list = []
     for experiment in experiment_list:
         save_pth = run_experiment(experiment)
-        
+        plot_prediction_grid(save_pth, 64)
+        pth_list.append(save_pth)
+    pth_list.append('results/yolo_uniow.csv')
+    pth_list.append('results/yolo_world.csv')
+    plot_box_and_whiskers_comparison(pth_list)
+
 
 
 
@@ -305,7 +311,11 @@ def sanitize_text(text):
     return f"{text.strip()}"
 
 if __name__ == "__main__":
-    run_experiment(experiment=OWLv2())
+    experiment_list = [ClaudeExperiment('claude-3-5-haiku-latest', get_prompt), ClaudeExperiment('claude-3-haiku-20240307', get_prompt),
+                       GeminiExperiment('gemini-2.0-flash-lite', get_prompt), GeminiExperiment('gemini-2.5-flash-lite-preview-06-17', get_prompt),
+                       GeminiExperiment('gemini-2.5-flash', get_prompt), GPTExperiment('gpt-4.1-mini', get_prompt), GPTExperiment('gpt-4.1-nano', get_prompt),
+                       GrokExperiment('grok-2-vision-1212', get_prompt), GPTExperiment('o4-mini', get_prompt), OWLv2()]
+    run_grasp_vlm_experiment(experiment_list)
 
 
     
