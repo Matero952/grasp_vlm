@@ -22,53 +22,53 @@ import ast
 from pathlib import Path
 
             
-# def plot_box_and_whiskers_comparison(csv_paths: list):
-#     one_box_data = []
-#     multi_box_data = []
-#     labels = [Path(path).stem for path in csv_paths]
-#     for csv_path, label in zip(csv_paths, labels):
-#         df = pd.read_csv(csv_path, sep=';', encoding='utf-8')
-#         df.columns = df.columns.str.replace('"', '', regex=False).str.strip()
-#         one_box_ious = []
-#         multi_box_ious = []
-#         for index, row in df.iterrows():
-#             target_boxes = ast.literal_eval(row['target_bboxes'])
-#             iou_dict = ast.literal_eval(row['ious'])
-#             if len(target_boxes.keys()) == 1:
-#                 for i in iou_dict.values():
-#                     one_box_ious.append(float(i))
-#             elif len(target_boxes.keys()) > 1:
-#                 for i in iou_dict.values():
-#                     multi_box_ious.append(float(i))
-#             else:
-#                 continue
-#         if one_box_ious:
-#             one_box_data.append(pd.DataFrame({'ious': one_box_ious, 'model': [label] * len(one_box_ious)}))
-#         if multi_box_ious:
-#             multi_box_data.append(pd.DataFrame({'ious': multi_box_ious, 'model': [label] * len(multi_box_ious)}))
-#     df_one = pd.concat(one_box_data, ignore_index=True) if one_box_data else pd.DataFrame()
-#     df_multi = pd.concat(multi_box_data, ignore_index=True) if multi_box_data else pd.DataFrame()
-#     fig, axes = plt.subplots(1, 2, figsize=(max(12, len(csv_paths) * 3), 8), sharey=True)
-#     if not df_one.empty:
-#         sns.boxplot(data=df_one, x='model', y='ious', ax=axes[0], palette='Set2', showfliers=False)
-#         sns.stripplot(data=df_one, x='model', y='ious', ax=axes[0], color='black', alpha=0.6, size=4, jitter=True)
-#         axes[0].set_title('One Grasp Bounding Box', fontsize=16)
-#         axes[0].set_xlabel('Model', fontsize=14)
-#         axes[0].tick_params(axis='x', rotation=45)
-#     if not df_multi.empty:
-#         sns.boxplot(data=df_multi, x='model', y='ious', ax=axes[1], palette='Set2', showfliers=False)
-#         sns.stripplot(data=df_multi, x='model', y='ious', ax=axes[1], color='black', alpha=0.6, size=4, jitter=True)
-#         axes[1].set_title('Two Grasp Bounding Boxes', fontsize=16)
-#         axes[1].set_xlabel('Model', fontsize=14)
-#         axes[1].tick_params(axis='x', rotation=45)
-#     for ax in axes:
-#         ax.set_ylabel('IoU', fontsize=14)
-#         ax.set_ylim(0, 1.0)
-#         ax.tick_params(axis='y', labelsize=12)
-#     plt.suptitle('Grasp Prediction IoU Comparison by Amount of Grasp Bounding Boxes', fontsize=18)
-#     plt.tight_layout(rect=[0, 0, 1, 0.95])
-#     plt.show()
-#     fig.savefig('numb_boxes_comparison.png', dpi=300, bbox_inches='tight')
+def plot_numb_boxes_box_and_whiskers_comparison(csv_paths: list):
+    one_box_data = []
+    multi_box_data = []
+    labels = [Path(path).stem for path in csv_paths]
+    for csv_path, label in zip(csv_paths, labels):
+        df = pd.read_csv(csv_path, sep=';', encoding='utf-8')
+        df.columns = df.columns.str.replace('"', '', regex=False).str.strip()
+        one_box_ious = []
+        multi_box_ious = []
+        for index, row in df.iterrows():
+            target_boxes = ast.literal_eval(row['target_bboxes'])
+            iou_dict = ast.literal_eval(row['ious'])
+            if len(target_boxes.keys()) == 1:
+                for i in iou_dict.values():
+                    one_box_ious.append(float(i))
+            elif len(target_boxes.keys()) > 1:
+                for i in iou_dict.values():
+                    multi_box_ious.append(float(i))
+            else:
+                continue
+        if one_box_ious:
+            one_box_data.append(pd.DataFrame({'ious': one_box_ious, 'model': [label] * len(one_box_ious)}))
+        if multi_box_ious:
+            multi_box_data.append(pd.DataFrame({'ious': multi_box_ious, 'model': [label] * len(multi_box_ious)}))
+    df_one = pd.concat(one_box_data, ignore_index=True) if one_box_data else pd.DataFrame()
+    df_multi = pd.concat(multi_box_data, ignore_index=True) if multi_box_data else pd.DataFrame()
+    fig, axes = plt.subplots(1, 2, figsize=(max(12, len(csv_paths) * 3), 8), sharey=True)
+    if not df_one.empty:
+        sns.boxplot(data=df_one, x='model', y='ious', ax=axes[0], palette='Set2', showfliers=False)
+        sns.stripplot(data=df_one, x='model', y='ious', ax=axes[0], color='black', alpha=0.6, size=4, jitter=True)
+        axes[0].set_title('One Grasp Prediction', fontsize=16)
+        axes[0].set_xlabel('Model', fontsize=14)
+        axes[0].tick_params(axis='x', rotation=45)
+    if not df_multi.empty:
+        sns.boxplot(data=df_multi, x='model', y='ious', ax=axes[1], palette='Set2', showfliers=False)
+        sns.stripplot(data=df_multi, x='model', y='ious', ax=axes[1], color='black', alpha=0.6, size=4, jitter=True)
+        axes[1].set_title('Two Grasp Predictions', fontsize=16)
+        axes[1].set_xlabel('Model', fontsize=14)
+        axes[1].tick_params(axis='x', rotation=45)
+    for ax in axes:
+        ax.set_ylabel('IoU', fontsize=14)
+        ax.set_ylim(0, 1.0)
+        ax.tick_params(axis='y', labelsize=12)
+    plt.suptitle('Grasp Prediction IoU Comparison by Amount of Grasp Predictions', fontsize=18)
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.show()
+    fig.savefig('numb_boxes_comparison.png', dpi=300, bbox_inches='tight')
 
 def plot_box_and_whiskers_comparison(csv_paths: list, labels=None):
     counter = 0
@@ -80,18 +80,10 @@ def plot_box_and_whiskers_comparison(csv_paths: list, labels=None):
         df.columns = df.columns.str.replace('"', '', regex=False).str.strip()
         ious = []
         for index, row in df.iterrows():
-            if len(ast.literal_eval(row['target_bboxes']).keys()) == 1:
-                iou_dict = ast.literal_eval(row['ious'])
-                if 'left' not in [i.strip() for i in list(iou_dict.keys())]:
-                    for i in iou_dict.values():
-                        assert isinstance(i, float)
-                        ious.append(float(i))
-                else:
-                    print(f'Skipping: {counter}')
-                    counter += 1
-                    continue
-            else:
-                continue
+            iou_dict = ast.literal_eval(row['ious'])
+            for i in iou_dict.values():
+                assert isinstance(i, float)
+                ious.append(float(i))
         model_data = {'ious': ious,'model': [label] * len(ious)}
         all_data.append(pd.DataFrame(model_data))
     combined_df = pd.concat(all_data, ignore_index=True)
@@ -103,13 +95,11 @@ def plot_box_and_whiskers_comparison(csv_paths: list, labels=None):
     plt.yticks(fontsize=12)
     plt.xlabel('Model', fontsize=16)
     plt.ylabel('IoU', fontsize=16)
-    plt.title('Comparison of IoU Distributions Across All Models for Two Handed Tasks', fontsize=18)
+    plt.title('Grasp Prediction Intersection over Union for All Models', fontsize=18)
     plt.ylim(0, 1.0)
     plt.tight_layout()
-    
-    # Show and save plot
     plt.show()
-    plt.savefig('all_model_comparison.png', dpi=300, bbox_inches='tight')
+    plt.savefig('results/all_model_comparison.png', dpi=300, bbox_inches='tight')
         
 def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'):
 
