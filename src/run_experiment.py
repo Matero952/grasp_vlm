@@ -25,6 +25,7 @@ def run_grasp_vlm_experiment(experiment_list:list[GeminiExperiment|VisionExperim
     pth_list.append('results/yolo_world.csv')
     plot_numb_boxes_box_and_whiskers_comparison(pth_list)
     plot_box_and_whiskers_comparison(pth_list)
+    plot_ious_by_img(pth_list)
 
 
 

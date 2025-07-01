@@ -20,8 +20,90 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import ast
 from pathlib import Path
+import csv
+import cv2
 
-            
+def plot_ious_by_img(csv_paths: list[str]):
+    img_iou_dict = {}
+    for i in range(500):
+        img_iou_dict[i] = []
+    for path in csv_paths:
+        df = pd.read_csv(path, sep=';')
+        df.columns = df.columns.str.replace('"', '', regex=False)
+        for index, row in df.iterrows():
+            img_id = int(row['img_id'])
+            iou_values = [val for val in ast.literal_eval(row['ious']).values()]
+            for val in iou_values:
+                img_iou_dict[img_id].append(val)
+    avg_img_iou = {}
+    bad_img_ids = []
+    for i in range(500):
+        ious = img_iou_dict[i]
+        average_iou = sum(ious) / len(ious)
+        avg_img_iou[i] = average_iou
+        if average_iou < 0.01:
+            bad_img_ids.append(i)
+    print(avg_img_iou)
+    df = pd.DataFrame.from_dict(avg_img_iou, orient='index').stack().reset_index()
+    df.columns = ['img_id', 'index', 'iou']
+    df = df.drop('index', axis=1)
+    print(df)
+    plt.figure(figsize=(20, 6))
+    plt.bar(df['img_id'], df['iou'])
+    plt.xlabel('Image ID')
+    plt.ylabel('IoU')
+    plt.title('IoU Distribution by Image ID for All Models')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+    plt.savefig('results/ious_by_img.png')
+    print(bad_img_ids)
+    class_by_bad_id = {}
+    with open('ground_truth_test.csv', 'r') as f:
+        reader = csv.DictReader(f, delimiter=';')
+        for i in bad_img_ids:
+            f.seek(0)  # Reset to beginning of file
+            next(reader)  # Skip header row after reset
+            for j in reader:
+                if str(j['img_id']).strip() == str(i):
+
+                    if j['tool'] not in class_by_bad_id:
+                        class_by_bad_id[j['tool']] = 1
+                    else:
+                        class_by_bad_id[j['tool']] += 1
+                    img_path = j['img_path']
+                    img = cv2.imread(img_path)
+                    
+                    if img is not None:
+                        # Create window title with info
+                        window_title = f"Image ID: {i}, Tool: {j['tool']}"
+                        cv2.imshow(window_title, img)
+                        
+                        # Wait for key press to continue
+                        print(f"Showing image: {img_path}")
+                        print(f"Press any key to continue...")
+                        cv2.waitKey(0)  # Wait for key press
+                        cv2.destroyAllWindows()
+                    else:
+                        print(f"Could not load image: {img_path}")
+    print(class_by_bad_id)
+    df = pd.DataFrame.from_dict(class_by_bad_id, orient='index', columns=['value'])
+    df.index.name = 'key'
+    df = df.reset_index()
+    df.plot(x='key', y='value', kind='bar', figsize=(8, 12))
+    plt.title('Occurences for Average iou < 0.01 By Class Across All Models')
+    plt.show()
+    plt.savefig('test.png')
+
+
+
+        
+
+
+        
+    
+    
+
 def plot_numb_boxes_box_and_whiskers_comparison(csv_paths: list):
     one_box_data = []
     multi_box_data = []
@@ -68,7 +150,7 @@ def plot_numb_boxes_box_and_whiskers_comparison(csv_paths: list):
     plt.suptitle('Grasp Prediction IoU Comparison by Amount of Grasp Predictions', fontsize=18)
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.show()
-    fig.savefig('numb_boxes_comparison.png', dpi=300, bbox_inches='tight')
+    fig.savefig('results/numb_boxes_comparison.png', dpi=300, bbox_inches='tight')
 
 def plot_box_and_whiskers_comparison(csv_paths: list, labels=None):
     counter = 0
@@ -278,10 +360,13 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'
   
 
 if __name__ == "__main__":
-    # model_list = ['results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307.csv', 'results/gemini-2.5-flash-lite-preview-06-17.csv',
-    #                                   'results/gemini-2.5-flash.csv', 'results/gemini-2.0-flash-lite.csv', 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano.csv',
-    #                                   'results/grok-2-vision-1212.csv', 'results/o4-mini.csv', 'results/owl_vit_prompt_1.csv', 'results/yolo_uniow_prompt_1.csv', 'results/yolo_world_prompt_1.csv']
+    model_list_selective = ['results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano.csv']
+    model_list = ['results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307.csv', 'results/gemini-2.5-flash-lite-preview-06-17.csv',
+                                      'results/gemini-2.5-flash.csv', 'results/gemini-2.0-flash-lite.csv', 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano.csv',
+                                      'results/grok-2-vision-1212.csv', 'results/o4-mini.csv', 'results/owl_vit.csv', 'results/yolo_uniow.csv', 'results/yolo_world.csv']
+    plot_ious_by_img(model_list)
+    # plot_box_and_whiskers_comparison(model_list_selective)
     # for i in model_list:
     #     plot_prediction_grid(i, 64)
     # plot_box_and_whiskers_comparison(model_list)
-    plot_prediction_grid('results/yolo_uniow.csv', 64)
+    # plot_prediction_grid('results/yolo_uniow.csv', 64)
