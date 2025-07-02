@@ -89,6 +89,7 @@ def run_experiment(experiment: GeminiExperiment|VisionExperiment|OWLv2, ground_t
                     reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, result, row)
                     df.loc[len(df)] = [row['img_id'], row['img_path'], reformatted_bnd_boxes, row['bboxes'], result_iou_dict, prompt]
                 elif not owl_experiment:
+                    print(experiment.model)
                     new_response, pred_dict, input_tokens, output_tokens = process_vlm_output(experiment, row)
                     try:
                         reformatted_bnd_boxes, result_iou_dict = calculate_iou_results(experiment, pred_dict, row)
@@ -350,8 +351,8 @@ if __name__ == "__main__":
                        GeminiExperiment('gemini-2.0-flash-lite', get_prompt), GeminiExperiment('gemini-2.5-flash-lite-preview-06-17', get_prompt),
                        GeminiExperiment('gemini-2.5-flash', get_prompt), GPTExperiment('gpt-4.1-mini', get_prompt), GPTExperiment('gpt-4.1-nano', get_prompt),
                        GrokExperiment('grok-2-vision-1212', get_prompt), GPTExperiment('o4-mini', get_prompt), OWLv2()]
-    # run_grasp_vlm_experiment(experiment_list)
-    fix_none_found(model_list)
+    run_grasp_vlm_experiment(experiment_list)
+    # fix_none_found(model_list)
 
 
     

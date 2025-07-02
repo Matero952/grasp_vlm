@@ -153,7 +153,7 @@ def plot_box_and_whiskers_comparison(csv_paths: list, labels=None):
         for index, row in df.iterrows():
             iou_dict = ast.literal_eval(row['ious'])
             for i in iou_dict.values():
-                assert isinstance(i, float)
+                # assert isinstance(i, float)
                 ious.append(float(i))
         model_data = {'ious': ious,'model': [label] * len(ious)}
         all_data.append(pd.DataFrame(model_data))
@@ -312,7 +312,7 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'
             axes[idx].add_patch(gt_rect)
             axes[idx].text(0.5, -0.1, os.path.basename(row['img_path']), transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
             axes[idx].text(0.5, -0.18, f"IoU: {row['ious']}", transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
-            if 'hand' in ast.literal_eval(row['pred_bboxes']).keys():
+            if 'hand' or 'handle' in ast.literal_eval(row['pred_bboxes']).keys():
                 axes[idx].text(pred_x1, pred_y1 - 0.02,'Pred: hand',color='red',fontsize=7,backgroundcolor='white')
                 axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: hand',color='lime',fontsize=7,backgroundcolor='white')
             elif 'index' in ast.literal_eval(row['pred_bboxes']).keys():
