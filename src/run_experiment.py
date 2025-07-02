@@ -312,12 +312,46 @@ def sanitize_text(text):
     text = re.sub(r'\s+', ' ', text)
     return f"{text.strip()}"
 
+# def fix_none_found(model_list):
+#     counter = 0
+#     for path in model_list:
+#         rows = []
+#         with open(path, 'r') as f:
+#             reader = csv.DictReader(f, delimiter=';')
+#             for row in reader:
+#                 if 'none_found' in (list(ast.literal_eval(row['pred_bboxes']).keys())):
+#                     keys = [i.strip() for i in list(ast.literal_eval(row['target_bboxes']).keys())]
+#                     fixed_pred_bbox = {}
+#                     fixed_ious = {}
+#                     for i in keys:
+#                         fixed_pred_bbox[i] = [0, 0, 0, 0]
+#                         fixed_ious[i] = 0.0
+#                     new_row = {'img_id': row['img_id'], 'img_path': row['img_path'], 'text_output': row['text_output'], 'pred_bboxes': fixed_pred_bbox, 'target_bboxes': row['target_bboxes'], 'ious': fixed_ious, 'input_tokens': row['input_tokens'], 'output_tokens': row['output_tokens']}
+#                 else:
+#                     new_row = row
+#                 rows.append(new_row)     
+#         print(rows)
+#         print(len(rows))
+#         df = pd.DataFrame(rows)
+#         new_path = Path(path).stem
+#         print(new_path)
+#         new_path += '_test.csv'
+#         print(new_path)
+#         df.to_csv(f'results/{new_path}', sep=';', encoding='utf-8', index=False)
+#         breakpoint()               
+#     print(counter)
+
 if __name__ == "__main__":
+    model_list = ['results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307.csv', 'results/gemini-2.5-flash-lite-preview-06-17.csv',
+                                      'results/gemini-2.5-flash.csv', 'results/gemini-2.0-flash-lite.csv', 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano.csv',
+                                      'results/grok-2-vision-1212.csv', 'results/o4-mini.csv', 'results/owl_vit.csv', 'results/yolo_uniow.csv', 'results/yolo_world.csv']
+
     experiment_list = [ClaudeExperiment('claude-3-5-haiku-latest', get_prompt), ClaudeExperiment('claude-3-haiku-20240307', get_prompt),
                        GeminiExperiment('gemini-2.0-flash-lite', get_prompt), GeminiExperiment('gemini-2.5-flash-lite-preview-06-17', get_prompt),
                        GeminiExperiment('gemini-2.5-flash', get_prompt), GPTExperiment('gpt-4.1-mini', get_prompt), GPTExperiment('gpt-4.1-nano', get_prompt),
                        GrokExperiment('grok-2-vision-1212', get_prompt), GPTExperiment('o4-mini', get_prompt), OWLv2()]
-    run_grasp_vlm_experiment(experiment_list)
+    # run_grasp_vlm_experiment(experiment_list)
+    fix_none_found(model_list)
 
 
     

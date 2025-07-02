@@ -24,6 +24,7 @@ import csv
 import cv2
 
 def plot_ious_by_img(csv_paths: list[str]):
+    counter = 0
     img_iou_dict = {}
     for i in range(500):
         img_iou_dict[i] = []
@@ -35,6 +36,9 @@ def plot_ious_by_img(csv_paths: list[str]):
             iou_values = [val for val in ast.literal_eval(row['ious']).values()]
             for val in iou_values:
                 img_iou_dict[img_id].append(val)
+                counter += 1
+    print(counter)
+    breakpoint()
     avg_img_iou = {}
     bad_img_ids = []
     for i in range(500):
@@ -71,21 +75,6 @@ def plot_ious_by_img(csv_paths: list[str]):
                         class_by_bad_id[j['tool']] = 1
                     else:
                         class_by_bad_id[j['tool']] += 1
-                    img_path = j['img_path']
-                    img = cv2.imread(img_path)
-                    
-                    if img is not None:
-                        # Create window title with info
-                        window_title = f"Image ID: {i}, Tool: {j['tool']}"
-                        cv2.imshow(window_title, img)
-                        
-                        # Wait for key press to continue
-                        print(f"Showing image: {img_path}")
-                        print(f"Press any key to continue...")
-                        cv2.waitKey(0)  # Wait for key press
-                        cv2.destroyAllWindows()
-                    else:
-                        print(f"Could not load image: {img_path}")
     print(class_by_bad_id)
     df = pd.DataFrame.from_dict(class_by_bad_id, orient='index', columns=['value'])
     df.index.name = 'key'
