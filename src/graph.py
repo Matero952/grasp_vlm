@@ -21,8 +21,62 @@ import matplotlib.pyplot as plt
 import ast
 from pathlib import Path
 import csv
-import cv2
+#TODO make a prediction grid for the really bad images, take the best prediction for that image and plot it
 
+def plot_dataset_info_k_means_cluster(model_list):
+    data = []
+    pred_data = []
+    #i want a list of lists that reprersent average gtbbox width, average gtbbox height
+    with open('ground_truth_test.csv', 'r') as f:
+        reader = csv.DictReader(f, delimiter=';')
+        for row in reader:
+            gts = ast.literal_eval(row['bboxes'])
+            for val in gts.values():
+                x1, y1, x2, y2 = [val[i] for i in val]
+                width = (x2 - x1) * 1000
+                height = (y2 - y1) * 1000
+                print(width, height)
+                data.append([width, height])
+    for path in model_list:
+        with open(path) as f:
+            reader = csv.DictReader(f, delimiter=';')
+            for row in reader:
+                preds = ast.literal_eval(row['pred_bboxes'])
+                for val in preds.values():
+                    try:
+                        x1, y1, x2, y2 = val
+                    except ValueError:
+                        print(val)
+                        print(row)
+                        print(path)
+                    # breakpoint()
+                    width = (x2 - x1) * 1000
+                    height = (y2 - y1) * 1000
+                    pred_data.append([width, height])
+        # Get the cluster centroids and labels
+
+    gt_widths, gt_heights = zip(*data)
+    pred_widths, pred_heights = zip(*pred_data)
+    # Create scatter plot
+    plt.figure(figsize=(8, 6))
+    plt.scatter(pred_widths, pred_heights, color='blue', label='Predicted', s=0.5)
+    plt.scatter(gt_widths, gt_heights, color='red', label='Ground Truth', s=0.5)
+    # plt.scatter(pred_widths, pred_heights, color='blue', label='Predicted', s=0.5)
+
+    # Add labels and legend
+    plt.xlabel('Bounding Box Width')
+    plt.ylabel('Bounding Box Height')
+    plt.title('Ground Truth vs. Predicted Bounding Box Sizes')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+    plt.savefig('tesss.png')
+    # Plot the points with cluster coloring
+
+
+
+# def plot_bad_prediction_grid(csv_list):
+#     #lets plot maybe the 16 worst predictions in the entire 
 def plot_ious_by_img(csv_paths: list[str]):
     counter = 0
     img_iou_dict = {}
@@ -41,48 +95,55 @@ def plot_ious_by_img(csv_paths: list[str]):
     breakpoint()
     avg_img_iou = {}
     bad_img_ids = []
+    all_img_ids = []
     for i in range(500):
         ious = img_iou_dict[i]
         average_iou = sum(ious) / len(ious)
         avg_img_iou[i] = average_iou
-        if average_iou < 0.01:
-            bad_img_ids.append(i)
-    print(avg_img_iou)
-    df = pd.DataFrame.from_dict(avg_img_iou, orient='index').stack().reset_index()
-    df.columns = ['img_id', 'index', 'iou']
-    df = df.drop('index', axis=1)
-    print(df)
-    plt.figure(figsize=(20, 6))
-    plt.bar(df['img_id'], df['iou'])
-    plt.xlabel('Image ID')
-    plt.ylabel('IoU')
-    plt.title('IoU Distribution by Image ID for All Models')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
-    plt.savefig('results/ious_by_img.png')
-    print(bad_img_ids)
-    class_by_bad_id = {}
-    with open('ground_truth_test.csv', 'r') as f:
-        reader = csv.DictReader(f, delimiter=';')
-        for i in bad_img_ids:
-            f.seek(0)  # Reset to beginning of file
-            next(reader)  # Skip header row after reset
-            for j in reader:
-                if str(j['img_id']).strip() == str(i):
+        all_img_ids.append((i, average_iou))
+    all_img_ids.sort(key=lambda x: x[1], reverse=True)
+    print(all_img_ids)
+    return all_img_ids
+    #     if average_iou < 0.01:
+    #         bad_img_ids.append(i)
+    # print(avg_img_iou)
+    # df = pd.DataFrame.from_dict(avg_img_iou, orient='index').stack().reset_index()
+    # df.columns = ['img_id', 'index', 'iou']
+    # df = df.drop('index', axis=1)
+    # print(df)
+    # plt.figure(figsize=(10, 6))
+    # plt.bar(df['img_id'], df['iou'], color='blue', alpha=0.7)
+    # plt.xlabel('Image ID')
+    # plt.ylabel('IoU')
+    # plt.title('Average IoU by Image ID for All Models')
+    # plt.xticks(rotation=45)
+    # plt.tight_layout()
+    # plt.show()
+    # plt.savefig('results/ious_by_img.png')
+    # print(bad_img_ids)
+    # class_by_bad_id = {}
+    # with open('ground_truth_test.csv', 'r') as f:
+    #     reader = csv.DictReader(f, delimiter=';')
+    #     for i in bad_img_ids:
+    #         f.seek(0)  # Reset to beginning of file
+    #         next(reader)  # Skip header row after reset
+    #         for j in reader:
+    #             if str(j['img_id']).strip() == str(i):
 
-                    if j['tool'] not in class_by_bad_id:
-                        class_by_bad_id[j['tool']] = 1
-                    else:
-                        class_by_bad_id[j['tool']] += 1
-    print(class_by_bad_id)
-    df = pd.DataFrame.from_dict(class_by_bad_id, orient='index', columns=['value'])
-    df.index.name = 'key'
-    df = df.reset_index()
-    df.plot(x='key', y='value', kind='bar', figsize=(8, 12))
-    plt.title('Occurences for Average iou < 0.01 By Class Across All Models')
-    plt.show()
-    plt.savefig('test.png')
+    #                 if j['tool'] not in class_by_bad_id:
+    #                     class_by_bad_id[j['tool']] = 1
+    #                 else:
+    #                     class_by_bad_id[j['tool']] += 1
+    # print(class_by_bad_id)
+    # df = pd.DataFrame.from_dict(class_by_bad_id, orient='index', columns=['value'])
+    # df.index.name = 'key'
+    # df = df.reset_index()
+    # df.plot(x='key', y='value', kind='bar', figsize=(8, 12))
+    # plt.title('Occurences for Average iou < 0.01 By Class Across All Models')
+    # plt.show()
+    # plt.savefig('test.png')
+
+
 
 
 
@@ -119,16 +180,16 @@ def plot_numb_boxes_box_and_whiskers_comparison(csv_paths: list):
             multi_box_data.append(pd.DataFrame({'ious': multi_box_ious, 'model': [label] * len(multi_box_ious)}))
     df_one = pd.concat(one_box_data, ignore_index=True) if one_box_data else pd.DataFrame()
     df_multi = pd.concat(multi_box_data, ignore_index=True) if multi_box_data else pd.DataFrame()
-    fig, axes = plt.subplots(1, 2, figsize=(max(12, len(csv_paths) * 3), 8), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(24, 10), sharey=True)
     if not df_one.empty:
         sns.boxplot(data=df_one, x='model', y='ious', ax=axes[0], palette='Set2', showfliers=False)
-        sns.stripplot(data=df_one, x='model', y='ious', ax=axes[0], color='black', alpha=0.6, size=4, jitter=True)
+        # sns.stripplot(data=df_one, x='model', y='ious', ax=axes[0], color='black', alpha=0.6, size=4, jitter=True)
         axes[0].set_title('One Grasp Prediction', fontsize=16)
         axes[0].set_xlabel('Model', fontsize=14)
         axes[0].tick_params(axis='x', rotation=45)
     if not df_multi.empty:
         sns.boxplot(data=df_multi, x='model', y='ious', ax=axes[1], palette='Set2', showfliers=False)
-        sns.stripplot(data=df_multi, x='model', y='ious', ax=axes[1], color='black', alpha=0.6, size=4, jitter=True)
+        # sns.stripplot(data=df_multi, x='model', y='ious', ax=axes[1], color='black', alpha=0.6, size=4, jitter=True)
         axes[1].set_title('Two Grasp Predictions', fontsize=16)
         axes[1].set_xlabel('Model', fontsize=14)
         axes[1].tick_params(axis='x', rotation=45)
@@ -159,10 +220,10 @@ def plot_box_and_whiskers_comparison(csv_paths: list, labels=None):
         all_data.append(pd.DataFrame(model_data))
     combined_df = pd.concat(all_data, ignore_index=True)
     print(len(combined_df), len(combined_df['model'].unique()), len(combined_df['ious'].unique()))
-    plt.figure(figsize=(max(12, len(csv_paths) * 3), 10))
+    plt.figure(figsize=(12, 10))
     sns.boxplot(data=combined_df, x='model', y='ious', palette='Set2', showfliers=False)
-    sns.stripplot(data=combined_df, x='model', y='ious', color='black', alpha=0.6, size=4, jitter=True)
-    plt.xticks(rotation=45, ha="right", fontsize=14)
+    # sns.stripplot(data=combined_df, x='model', y='ious', color='black', alpha=0.6, size=4, jitter=True)
+    plt.xticks(rotation=45, ha="right", fontsize=12)
     plt.yticks(fontsize=12)
     plt.xlabel('Model', fontsize=16)
     plt.ylabel('IoU', fontsize=16)
@@ -173,7 +234,6 @@ def plot_box_and_whiskers_comparison(csv_paths: list, labels=None):
     plt.savefig('results/all_model_comparison.png', dpi=300, bbox_inches='tight')
         
 def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'):
-
     tools = []
     for key, value in tool_dict.items():
         name, _, _ = value
@@ -200,7 +260,6 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'
                 else:
                     continue
                 break
-
             else:
                 continue
     print(imgs)
@@ -338,6 +397,54 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'
     plt.show()
     plt.savefig(f'results/{model_name}_prediction_grid.png')
 
+
+
+def plot_bar_chart_by_annotation_average_score(path_list):
+    result_dict = {'index_finger': [], 'one_hand': [], 'two_hands': [], 'index_thumb': [], 'handle': []}
+    counter = 0
+    for path in path_list:
+        with open(path, 'r') as f:
+            reader = csv.DictReader(f, delimiter=';')
+            for row in reader:
+                iou_dict = ast.literal_eval(row['ious'])
+                for key, value in iou_dict.items():
+                    if key == 'index' and len(list(iou_dict.keys())) == 1:
+                        result_dict['index_finger'].append(value)
+                    elif any(substring in row['img_path'] for substring in ['wrench', 'solder', 'screwdriver', 'hammer', 'allen']):
+                        result_dict['one_hand'].append(value)
+                    elif any(substring in row['img_path'] for substring in ['top', 'bot', 'bar', 'handle', 'door']):
+                        result_dict['handle'].append(value)
+                        # result_dict['handle'].append(value)
+                    elif 'hand1' in list(iou_dict.keys()):
+                        result_dict['two_hands'].append(value)
+                    elif 'index' in list(iou_dict.keys()) and len(list(iou_dict.keys())) == 2:
+                        result_dict['index_thumb'].append(value)
+                    else:
+                        assert 0 > 1, print(iou_dict, print(iou_dict.keys()), print(row['pred_bboxes']), print(row['img_path']))
+                    counter += 1
+    print(result_dict['handle'])
+    print(f'Number of annotations: {counter}')
+    new_result_dict = {'index_finger': sum(result_dict['index_finger'])/len(result_dict['index_finger']), 'one_hand': sum(result_dict['one_hand'])/len(result_dict['one_hand']),
+                       'two_hands': sum(result_dict['two_hands'])/len(result_dict['two_hands']), 'index_thumb': sum(result_dict['index_thumb'])/len(result_dict['index_thumb']),
+                       'handle': sum(result_dict['handle'])/len(result_dict['handle'])}
+    print(len(result_dict['index_finger']), len(result_dict['one_hand']), len(result_dict['two_hands']), len(result_dict['index_thumb']), len(result_dict['handle']))
+    print(new_result_dict)
+    df = pd.DataFrame.from_dict(new_result_dict, orient='index', columns=['Average IoU'])
+    df.index.name = 'Annotation Type in Dataset'
+    df = df.reset_index()
+    plt.figure(figsize=(10, 6))
+    sns.barplot(data=df, x='Annotation Type in Dataset', y='Average IoU', palette='Set1')
+    plt.title('Average Intersection over Union by Annotation Type in Dataset', fontsize=16)
+    plt.xlabel('Annotation Type in Dataset', fontsize=14)
+    plt.ylabel('Average IoU', fontsize=14)
+    plt.xticks(rotation=0, fontsize=12)
+    plt.tight_layout()
+    plt.show()
+    plt.savefig('results/average_iou_by_annotation_type.png', dpi=300, bbox_inches='tight')
+
+                    
+
+
             
 
             
@@ -354,6 +461,10 @@ if __name__ == "__main__":
                                       'results/gemini-2.5-flash.csv', 'results/gemini-2.0-flash-lite.csv', 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano.csv',
                                       'results/grok-2-vision-1212.csv', 'results/o4-mini.csv', 'results/owl_vit.csv', 'results/yolo_uniow.csv', 'results/yolo_world.csv']
     plot_ious_by_img(model_list)
+    # plot_dataset_info_k_means_cluster(model_list=model_list)
+    # plot_numb_boxes_box_and_whiskers_comparison(model_list)
+    # reorganize_csvs(model_list)
+    # plot_bar_chart_by_annotation_average_score(model_list)
     # plot_box_and_whiskers_comparison(model_list_selective)
     # for i in model_list:
     #     plot_prediction_grid(i, 64)
