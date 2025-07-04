@@ -1,7 +1,6 @@
 <h1 align="center"><strong>Grasp Prediction with Vision-Language Models and Open-Vocabulary Object-Detection Models</strong></h1>
 
-<h2 align="left">Getting Set Up</h2>
-
+## Getting Set Up
 
 ```bash
 #First, clone the repository
@@ -15,8 +14,9 @@ rm README.dataset.txt; rm README.roboflow.txt
 #Then, move 'train' to the directory that the cloned repo is in and rename 'train' to 'grasp_vlm_dataset'
 mv train/ replace_this_with_where_you_cloned_the_repo/grasp_vlm/grasp_vlm_dataset
 #Done!
+```
 
-<h2 align="left">How to View on Roboflow Universe</h2>
+## How to View on Roboflow Universe
 
 
 
