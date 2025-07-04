@@ -17,6 +17,11 @@ mv train/ replace_this_with_where_you_cloned_the_repo/grasp_vlm/grasp_vlm_datase
 ```
 
 ## How to View on Roboflow Universe
+In a search bar, type:
+```bash
+https://universe.roboflow.com/correllmateo/grasp_vlm
+```
+
 
 
 
