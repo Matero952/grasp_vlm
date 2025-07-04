@@ -17,6 +17,8 @@ mv train/ replace_this_with_where_you_cloned_the_repo/grasp_vlm/grasp_vlm_datase
 #Done!
 '''
 
+<h2 align="left">How to View on Roboflow Universe</h2>
+
 
 
 
