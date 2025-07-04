@@ -18,3 +18,4 @@ results/yolo
 results/yolo_world
 old_data
 results/greenstar_old/
+grasp_vlm_dataset
