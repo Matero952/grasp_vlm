@@ -1,8 +1,7 @@
 <h1 align="center"><strong>Grasp Prediction with Vision-Language Models and Open-Vocabulary Object-Detection Models</strong></h1>
 
-<h2 align="left">Dataset</h2>
+<h2 align="left">Getting Set Up</h2>
 
-Preparation:
 
 ```bash
 #First, clone the repository
