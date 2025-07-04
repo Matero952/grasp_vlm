@@ -143,177 +143,6 @@ def plot_ious_by_img(csv_paths: list[str]):
     # plt.show()
     # plt.savefig('test.png')
 
-
-def plot_best_worst(all_img_ids, csv_paths):
-    worst = all_img_ids[-9:]
-    best = all_img_ids[:9]
-    print(worst)
-    print(best)
-    worst_paths = {}
-    best_paths = {}
-    for i in worst:
-        img_id, _ = i
-        worst_paths[img_id] = []
-        for csv_path in csv_paths:
-            df = pd.read_csv(csv_path, sep=';')
-            df.columns = df.columns.str.replace('"', '', regex=False)
-            img_id, _ = i
-            to_check_row = df[df['img_id'].astype(str) == str(img_id)]
-            print(to_check_row)
-            worst_paths[img_id].append([to_check_row['ious'].iloc[0], to_check_row['pred_bboxes'].iloc[0], to_check_row['target_bboxes'].iloc[0], Path(csv_path).stem, to_check_row['img_path'].iloc[0]])
-    for i in best:
-        img_id, _ = i
-        best_paths[img_id] = []
-        for csv_path in csv_paths:
-            df = pd.read_csv(csv_path, sep=';')
-            df.columns = df.columns.str.replace('"', '', regex=False)
-            img_id, _ = i   
-            to_check_row = df[df['img_id'].astype(str) == str(img_id)]  
-            print(to_check_row) 
-            best_paths[img_id].append([to_check_row['ious'].iloc[0], to_check_row['pred_bboxes'].iloc[0], to_check_row['target_bboxes'].iloc[0], Path(csv_path).stem, to_check_row['img_path'].iloc[0]])
-
-    for img_id in worst_paths:
-            best_model_data = max(worst_paths[img_id], key=lambda x: x[0])
-            worst_paths[img_id] = [best_model_data]
-
-        
-    print(worst_paths)
-    print(worst_paths)
-    breakpoint()
-    num_imgs = 9
-    cols = int(math.sqrt(num_imgs))
-    rows = math.ceil(num_imgs/cols)
-    print(num_imgs, cols, rows)
-    fig, axes = plt.subplots(rows, cols, figsize=(40, 7 * rows))
-    axes = axes.flatten()
-    for idx in range(9):
-        to_check = worst_paths[list(worst_paths.keys())[idx]][0]
-        bad_ious, bad_pred_bboxes, bad_target_bboxes, model_name, img_path = to_check
-        img = mpimg.imread(img_path.strip())
-        axes[idx].imshow(img)
-        axes[idx].axis('off')
-        pred_boxes = ast.literal_eval(bad_pred_bboxes)
-        target_boxes = ast.literal_eval(bad_target_bboxes)
-        if len(target_boxes) > 1:
-            pred_x1, pred_y1, pred_x2, pred_y2 = (pred_boxes[list(pred_boxes.keys())[0]])
-            try:
-                pred2_x1, pred2_y1, pred2_x2, pred2_y2 = (pred_boxes[list(pred_boxes.keys())[1]])
-            except IndexError:
-                pred2_x1, pred2_y1, pred2_x2, pred2_y2 = (0, 0, 0, 0)
-                #this ONLY happens because i initially forgot to add the second 'none_found' box to the pred_bboxes
-                #where it assumbes that it is 0,0,0,0
-            gt_x1, gt_y1, gt_x2, gt_y2 = [target_boxes[list(target_boxes.keys())[1]]['x_1'], target_boxes[list(target_boxes.keys())[1]]['y_1'],
-                                          target_boxes[list(target_boxes.keys())[1]]['x_2'], target_boxes[list(target_boxes.keys())[1]]['y_2']]
-            gt2_x1, gt2_y1, gt2_x2, gt2_y = [target_boxes[list(target_boxes.keys())[0]]['x_1'], target_boxes[list(target_boxes.keys())[0]]['y_1'],
-                                          target_boxes[list(target_boxes.keys())[0]]['x_2'], target_boxes[list(target_boxes.keys())[0]]['y_2']]
-            #results are structured {'index': 'thumb':}, but ground truth is structured {'thumb': 'index':}
-            gt_x1 = gt_x1 * 1000
-            gt_y1 = gt_y1 * 1000
-            gt_x2 = gt_x2 * 1000
-            gt_y2 = gt_y2 * 1000
-            gt2_x1 = gt2_x1 * 1000
-            gt2_y1 = gt2_y1 * 1000
-            gt2_x2 = gt2_x2 * 1000
-            gt2_y2 = gt2_y * 1000
-            pred_x1 = pred_x1 * 1000
-            pred_y1 = pred_y1 * 1000
-            pred_x2 = pred_x2 * 1000
-            pred_y2 = pred_y2 * 1000
-            pred2_x1 = pred2_x1 * 1000
-            pred2_y1 = pred2_y1 * 1000
-            pred2_x2 = pred2_x2 * 1000
-            pred2_y2 = pred2_y2 * 1000
-            pred_rect_1 = patches.Rectangle((pred_x1, pred_y1), pred_x2 - pred_x1, pred_y2 - pred_y1, linewidth=3, edgecolor='red', facecolor='none')
-            pred_rect_2 = patches.Rectangle((pred2_x1, pred2_y1), pred2_x2 - pred2_x1, pred2_y2 - pred2_y1, linewidth=3, edgecolor='red', facecolor='none')
-            gt_rect_1 = patches.Rectangle((gt_x1, gt_y1), gt_x2 - gt_x1, gt_y2 - gt_y1, linewidth=3, edgecolor='lime', facecolor='none')
-            gt_rect_2 = patches.Rectangle((gt2_x1, gt2_y1), gt2_x2 - gt2_x1, gt2_y2 - gt2_y1, linewidth=3, edgecolor='lime', facecolor='none')
-            axes[idx].add_patch(pred_rect_1)
-            axes[idx].add_patch(pred_rect_2)
-            axes[idx].add_patch(gt_rect_1)
-            axes[idx].add_patch(gt_rect_2)
-            axes[idx].text(0.5, -0.1, os.path.basename(img_path), transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
-            axes[idx].text(0.5, -0.18, f"IoU: {bad_ious}", transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
-            if 'index' in ast.literal_eval(bad_pred_bboxes).keys():
-                axes[idx].text(pred_x1, pred_y1 - 0.04,'Pred: index',color='red',fontsize=7,backgroundcolor='white')
-                axes[idx].text(pred2_x1, pred2_y1 - 0.04,'Pred: thumb',color='red',fontsize=7,backgroundcolor='white')
-                axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: index',color='lime',fontsize=7,backgroundcolor='white')
-                axes[idx].text(gt2_x1, gt2_y1 - 0.04,'GT: thumb',color='lime',fontsize=7,backgroundcolor='white')
-            elif 'hand1' in ast.literal_eval(bad_pred_bboxes).keys():
-                axes[idx].text(pred_x1, pred_y1 - 0.04,'Pred: hand1',color='red',fontsize=7,backgroundcolor='white')
-                axes[idx].text(pred2_x1, pred2_y1 - 0.04,'Pred: hand2',color='red',fontsize=7,backgroundcolor='white')
-                axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: hand1',color='lime',fontsize=7,backgroundcolor='white')
-                axes[idx].text(gt2_x1, gt2_y1 - 0.04,'GT: hand2',color='lime',fontsize=7,backgroundcolor='white')
-            elif 'none_found' in ast.literal_eval(bad_pred_bboxes).keys():
-                continue
-            else:
-                print(ast.literal_eval(bad_pred_bboxes).keys())
-                assert 0 > 1
-            axes[idx].text(pred_x1, pred_y1-0.06, f'{model_name}', color='red', fontsize=7, backgroundcolor='white')
-        elif len(target_boxes) == 1:
-            try:
-                pred_x1, pred_y1, pred_x2, pred_y2 = pred_boxes[list(pred_boxes.keys())[0]]
-            except ValueError:
-                pred_x1, pred_y1, pred_x2, pred_y2 = (0, 0, 0, 0)
-                #this ONLY happens because i initially forgot to add the second 'none_found' box to the pred_bboxes
-                #where it assumbes that it is 0,0,0,0.
-                #it also only happens if the model produces either no json or a bad json
-            print(type(pred_x1), type(pred_y1), type(pred_x2), type(pred_y2))
-            gt_x1, gt_y1, gt_x2, gt_y2 = [target_boxes[list(target_boxes.keys())[0]]['x_1'], target_boxes[list(target_boxes.keys())[0]]['y_1'], 
-                                          target_boxes[list(target_boxes.keys())[0]]['x_2'], target_boxes[list(target_boxes.keys())[0]]['y_2']]
-            print(type(target_boxes[list(target_boxes.keys())[0]]))
-            print(type(gt_x1), type(gt_y1), type(gt_x2), type(gt_y2))
-            print(gt_x1)
-            gt_x1 = gt_x1 * 1000
-            gt_y1 = gt_y1 * 1000
-            gt_x2 = gt_x2 * 1000
-            gt_y2 = gt_y2 * 1000
-            pred_x1 = pred_x1 * 1000
-            pred_y1 = pred_y1 * 1000
-            pred_x2 = pred_x2 * 1000
-            pred_y2 = pred_y2 * 1000
-            pred_rect = patches.Rectangle((pred_x1, pred_y1), pred_x2 - pred_x1, pred_y2 - pred_y1, linewidth=3, edgecolor='red', facecolor='none')
-            gt_rect = patches.Rectangle((gt_x1, gt_y1), gt_x2 - gt_x1, gt_y2 - gt_y1, linewidth=3, edgecolor='lime', facecolor='none')
-            axes[idx].add_patch(pred_rect)
-            axes[idx].add_patch(gt_rect)
-            axes[idx].text(0.5, -0.1, os.path.basename(img_path), transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
-            axes[idx].text(0.5, -0.18, f"IoU: {bad_ious}", transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
-            if 'hand' or 'handle' in ast.literal_eval(bad_pred_bboxes).keys():
-                axes[idx].text(pred_x1, pred_y1 - 0.02,'Pred: hand',color='red',fontsize=7,backgroundcolor='white')
-                axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: hand',color='lime',fontsize=7,backgroundcolor='white')
-            elif 'index' in ast.literal_eval(bad_pred_bboxes).keys():
-                axes[idx].text(pred_x1, pred_y1 - 0.04,'Pred: index',color='red',fontsize=7,backgroundcolor='white')
-                axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: index',color='lime',fontsize=7,backgroundcolor='white')
-            elif 'none_found' in ast.literal_eval(bad_pred_bboxes).keys():
-                continue
-            else:
-                print(ast.literal_eval(bad_pred_bboxes).keys())
-                assert 0 > 1
-            axes[idx].text(pred_x1, pred_y1-0.06, f'{model_name}', color='red', fontsize=7, backgroundcolor='white')
-        else:
-
-            assert 0 > 1
-        
-        for j in range(idx + 1, len(axes)):
-            axes[j].axis('off') 
-    model_name = Path(csv_path).stem
-    plt.suptitle(f'Grasp Prediction Grid for {model_name}', fontsize=45, y= 0.99)
-    # plt.legend(f'Red = {model_name}, Green = Groun  d Truth')
-    plt.tight_layout()
-    red_patch = patches.Patch(color='red', label=f'Red = {model_name}')
-    green_patch = patches.Patch(color='lime', label='Green = Ground Truth')
-    fig.legend(handles=[red_patch, green_patch], loc='upper right', fontsize=25)
-    plt.show()
-    plt.savefig(f'results/bad_prediction_grid.png')
-
-
-
-        
-
-
-        
-    
-    
-
 def plot_numb_boxes_box_and_whiskers_comparison(csv_paths: list):
     one_box_data = []
     multi_box_data = []
@@ -392,7 +221,207 @@ def plot_box_and_whiskers_comparison(csv_paths: list, labels=None):
     plt.tight_layout()
     plt.show()
     plt.savefig('results/all_model_comparison.png', dpi=300, bbox_inches='tight')
+
+def plot_predition_grid(model_img_tuples, gt_file='ground_truth_test.csv'):
+    """
+    Plot prediction grid for specific model-image combinations.
+    
+    Args:
+        model_img_tuples: List of tuples (model_name, img_id) where:
+                         - model_name: name of the model (used to find CSV file)
+                         - img_id: specific image ID to look for in the CSV
+        gt_file: path to ground truth CSV file
+    """
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import matplotlib.image as mpimg
+    import matplotlib.patches as patches
+    import ast
+    import os
+    import math
+    from pathlib import Path
+    
+    # Load ground truth data
+    gt = pd.read_csv(gt_file, sep=';')
+    gt.columns = gt.columns.str.replace('"', '', regex=False)
+    
+    # Collect data for each model-image pair
+    plot_data = []
+    
+    for model_name, img_id in model_img_tuples:
+        # Construct CSV path for this model
+        csv_path = f"results/{model_name}.csv"  # Adjust path format as needed
+        try:
+            # Load model predictions CSV
+            df = pd.read_csv(csv_path, sep=';')
+            df.columns = df.columns.str.replace('"', '', regex=False)
+            # Find the row with matching img_id
+            # Assuming img_id could be in 'img_path' column or a separate 'img_id' column
+            if 'img_id' in df.columns:
+                matching_row = df[df['img_id'] == img_id]
+            else:
+                # Look for img_id in img_path (basename without extension)
+                matching_row = df[df['img_path'].apply(lambda x: Path(x).stem == str(img_id))]
+            
+            if not matching_row.empty:
+                row_data = matching_row.iloc[0]
+                plot_data.append({
+                    'model_name': model_name,
+                    'img_id': img_id,
+                    'row': row_data
+                })
+            else:
+                print(f"Warning: Image ID {img_id} not found in {csv_path}")
+                
+        except FileNotFoundError:
+            print(f"Warning: CSV file {csv_path} not found for model {model_name}")
+        except Exception as e:
+            print(f"Error processing {model_name}, {img_id}: {e}")
+    
+    if not plot_data:
+        print("No valid data found to plot")
+        return
+    
+    # Calculate grid dimensions
+    num_imgs = len(plot_data)
+    cols = int(math.sqrt(num_imgs))
+    rows = math.ceil(num_imgs / cols)
+    
+    print(f"Plotting {num_imgs} images in {rows}x{cols} grid")
+    
+    # Create subplots
+    fig, axes = plt.subplots(rows, cols, figsize=(40, 7 * rows))
+    if num_imgs == 1:
+        axes = [axes]
+    else:
+        axes = axes.flatten()
+    
+    # Plot each image
+    for idx, data in enumerate(plot_data):
+        model_name = data['model_name']
+        img_id = data['img_id']
+        row = data['row']
         
+        # Load and display image
+        img = mpimg.imread(row['img_path'].strip())
+        axes[idx].imshow(img)
+        axes[idx].axis('off')
+        
+        # Parse bounding boxes
+        pred_boxes = ast.literal_eval(row['pred_bboxes'])
+        target_boxes = ast.literal_eval(row['target_bboxes'])
+        
+        if len(target_boxes) > 1:
+            # Handle case with multiple target boxes
+            pred_x1, pred_y1, pred_x2, pred_y2 = (pred_boxes[list(pred_boxes.keys())[0]])
+            try:
+                pred2_x1, pred2_y1, pred2_x2, pred2_y2 = (pred_boxes[list(pred_boxes.keys())[1]])
+            except (IndexError, KeyError):
+                pred2_x1, pred2_y1, pred2_x2, pred2_y2 = (0, 0, 0, 0)
+            
+            gt_x1, gt_y1, gt_x2, gt_y2 = [target_boxes[list(target_boxes.keys())[1]]['x_1'], 
+                                          target_boxes[list(target_boxes.keys())[1]]['y_1'],
+                                          target_boxes[list(target_boxes.keys())[1]]['x_2'], 
+                                          target_boxes[list(target_boxes.keys())[1]]['y_2']]
+            gt2_x1, gt2_y1, gt2_x2, gt2_y2 = [target_boxes[list(target_boxes.keys())[0]]['x_1'], 
+                                              target_boxes[list(target_boxes.keys())[0]]['y_1'],
+                                              target_boxes[list(target_boxes.keys())[0]]['x_2'], 
+                                              target_boxes[list(target_boxes.keys())[0]]['y_2']]
+            
+            # Scale coordinates
+            scale_factor = 1000
+            coords = [gt_x1, gt_y1, gt_x2, gt_y2, gt2_x1, gt2_y1, gt2_x2, gt2_y2,
+                     pred_x1, pred_y1, pred_x2, pred_y2, pred2_x1, pred2_y1, pred2_x2, pred2_y2]
+            coords = [c * scale_factor for c in coords]
+            (gt_x1, gt_y1, gt_x2, gt_y2, gt2_x1, gt2_y1, gt2_x2, gt2_y2,
+             pred_x1, pred_y1, pred_x2, pred_y2, pred2_x1, pred2_y1, pred2_x2, pred2_y2) = coords
+            
+            # Create rectangles
+            pred_rect_1 = patches.Rectangle((pred_x1, pred_y1), pred_x2 - pred_x1, pred_y2 - pred_y1, 
+                                          linewidth=3, edgecolor='red', facecolor='none')
+            pred_rect_2 = patches.Rectangle((pred2_x1, pred2_y1), pred2_x2 - pred2_x1, pred2_y2 - pred2_y1, 
+                                          linewidth=3, edgecolor='red', facecolor='none')
+            gt_rect_1 = patches.Rectangle((gt_x1, gt_y1), gt_x2 - gt_x1, gt_y2 - gt_y1, 
+                                        linewidth=3, edgecolor='lime', facecolor='none')
+            gt_rect_2 = patches.Rectangle((gt2_x1, gt2_y1), gt2_x2 - gt2_x1, gt2_y2 - gt2_y1, 
+                                        linewidth=3, edgecolor='lime', facecolor='none')
+            
+            # Add rectangles to plot
+            axes[idx].add_patch(pred_rect_1)
+            axes[idx].add_patch(pred_rect_2)
+            axes[idx].add_patch(gt_rect_1)
+            axes[idx].add_patch(gt_rect_2)
+            
+            # Add labels
+            pred_keys = list(pred_boxes.keys())
+            if 'index' in pred_keys:
+                axes[idx].text(pred_x1, pred_y1 - 0.04, 'Pred: index', color='red', fontsize=7, backgroundcolor='white')
+                axes[idx].text(pred2_x1, pred2_y1 - 0.04, 'Pred: thumb', color='red', fontsize=7, backgroundcolor='white')
+                axes[idx].text(gt_x1, gt_y1 - 0.04, 'GT: index', color='lime', fontsize=7, backgroundcolor='white')
+                axes[idx].text(gt2_x1, gt2_y1 - 0.04, 'GT: thumb', color='lime', fontsize=7, backgroundcolor='white')
+            elif 'hand1' in pred_keys:
+                axes[idx].text(pred_x1, pred_y1 - 0.04, 'Pred: hand1', color='red', fontsize=7, backgroundcolor='white')
+                axes[idx].text(pred2_x1, pred2_y1 - 0.04, 'Pred: hand2', color='red', fontsize=7, backgroundcolor='white')
+                axes[idx].text(gt_x1, gt_y1 - 0.04, 'GT: hand1', color='lime', fontsize=7, backgroundcolor='white')
+                axes[idx].text(gt2_x1, gt2_y1 - 0.04, 'GT: hand2', color='lime', fontsize=7, backgroundcolor='white')
+        
+        elif len(target_boxes) == 1:
+            # Handle case with single target box
+            try:
+                pred_x1, pred_y1, pred_x2, pred_y2 = pred_boxes[list(pred_boxes.keys())[0]]
+            except (ValueError, KeyError):
+                pred_x1, pred_y1, pred_x2, pred_y2 = (0, 0, 0, 0)
+            
+            gt_x1, gt_y1, gt_x2, gt_y2 = [target_boxes[list(target_boxes.keys())[0]]['x_1'], 
+                                          target_boxes[list(target_boxes.keys())[0]]['y_1'], 
+                                          target_boxes[list(target_boxes.keys())[0]]['x_2'], 
+                                          target_boxes[list(target_boxes.keys())[0]]['y_2']]
+            
+            # Scale coordinates
+            scale_factor = 1000
+            gt_x1, gt_y1, gt_x2, gt_y2 = [c * scale_factor for c in [gt_x1, gt_y1, gt_x2, gt_y2]]
+            pred_x1, pred_y1, pred_x2, pred_y2 = [c * scale_factor for c in [pred_x1, pred_y1, pred_x2, pred_y2]]
+            
+            # Create rectangles
+            pred_rect = patches.Rectangle((pred_x1, pred_y1), pred_x2 - pred_x1, pred_y2 - pred_y1, 
+                                        linewidth=3, edgecolor='red', facecolor='none')
+            gt_rect = patches.Rectangle((gt_x1, gt_y1), gt_x2 - gt_x1, gt_y2 - gt_y1, 
+                                      linewidth=3, edgecolor='lime', facecolor='none')
+            
+            # Add rectangles to plot
+            axes[idx].add_patch(pred_rect)
+            axes[idx].add_patch(gt_rect)
+            
+            # Add labels
+            pred_keys = list(pred_boxes.keys())
+            if any(key in pred_keys for key in ['hand', 'handle']):
+                axes[idx].text(pred_x1, pred_y1 - 0.02, 'Pred: hand', color='red', fontsize=7, backgroundcolor='white')
+                axes[idx].text(gt_x1, gt_y1 - 0.04, 'GT: hand', color='lime', fontsize=7, backgroundcolor='white')
+            elif 'index' in pred_keys:
+                axes[idx].text(pred_x1, pred_y1 - 0.04, 'Pred: index', color='red', fontsize=7, backgroundcolor='white')
+                axes[idx].text(gt_x1, gt_y1 - 0.04, 'GT: index', color='lime', fontsize=7, backgroundcolor='white')
+        
+        # Add image info and IoU
+        axes[idx].text(0.5, -0.08, f"{model_name} - {os.path.basename(row['img_path'])}", 
+                      transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
+        axes[idx].text(0.5, -0.11, f"IoU: {row['ious']}", 
+                      transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
+    
+    # Hide unused subplots
+    for j in range(len(plot_data), len(axes)):
+        axes[j].axis('off')
+    
+    # Add title and legend
+    plt.suptitle('Good Grasp Prediction Examples', fontsize=45, y=0.99)
+    plt.tight_layout()
+    
+    red_patch = patches.Patch(color='red', label='Predictions')
+    green_patch = patches.Patch(color='lime', label='Ground Truth')
+    fig.legend(handles=[red_patch, green_patch], loc='upper right', fontsize=25)
+    
+    plt.show()
+    plt.savefig('results/good_prediction_comparison_grid.png')
+
 def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'):
     tools = []
     for key, value in tool_dict.items():
@@ -531,7 +560,7 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'
             axes[idx].add_patch(gt_rect)
             axes[idx].text(0.5, -0.1, os.path.basename(row['img_path']), transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
             axes[idx].text(0.5, -0.18, f"IoU: {row['ious']}", transform=axes[idx].transAxes, ha='center', va='top', fontsize=10)
-            if 'hand' or 'handle' in ast.literal_eval(row['pred_bboxes']).keys():
+            if 'hand' in ast.literal_eval(row['pred_bboxes']).keys() or 'handle' in ast.literal_eval(row['pred_bboxes']).keys():
                 axes[idx].text(pred_x1, pred_y1 - 0.02,'Pred: hand',color='red',fontsize=7,backgroundcolor='white')
                 axes[idx].text(gt_x1, gt_y1 - 0.04,'GT: hand',color='lime',fontsize=7,backgroundcolor='white')
             elif 'index' in ast.literal_eval(row['pred_bboxes']).keys():
@@ -555,7 +584,7 @@ def plot_prediction_grid(csv_path, numb_of_imgs, gt_file='ground_truth_test.csv'
     green_patch = patches.Patch(color='lime', label='Green = Ground Truth')
     fig.legend(handles=[red_patch, green_patch], loc='upper right', fontsize=25)
     plt.show()
-    plt.savefig(f'results/{model_name}_____prediction_grid.png')
+    plt.savefig(f'results/{model_name}_prediction_grid.png')
 
 
 
@@ -601,33 +630,18 @@ def plot_bar_chart_by_annotation_average_score(path_list):
     plt.tight_layout()
     plt.show()
     plt.savefig('results/average_iou_by_annotation_type.png', dpi=300, bbox_inches='tight')
-
-                    
-
-
-            
-
-            
-
-
-
-        
-
-  
-
+                
+good_example_list = [('gemini-2.5-flash-lite-preview-06-17', 19), ('gemini-2.5-flash-lite-preview-06-17', 491), ('gemini-2.5-flash-lite-preview-06-17', 461), ('yolo_world', 214), ('yolo_world', 351), ('gemini-2.5-flash-lite-preview-06-17', 371), ('gemini-2.5-flash-lite-preview-06-17', 430), ('yolo_uniow', 215), ('gemini-2.5-flash-lite-preview-06-17', 8)]
+bad_example_list = [('grok-2-vision-1212', 263), ('gpt-4.1-nano', 199), ('gpt-4.1-mini', 6), ('owl_vit', 48), ('yolo_uniow', 8), ('yolo_uniow', 167), ('claude-3-haiku-20240307', 263), ('o4-mini', 78), ('o4-mini', 99)]
+def ious_to_token_usage(model_list):
+    for path in model_list:
+        df = pd.read_csv(path)
+    
+    
 if __name__ == "__main__":
     model_list_selective = ['results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano.csv']
     model_list = ['results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307.csv', 'results/gemini-2.5-flash-lite-preview-06-17.csv',
                                       'results/gemini-2.5-flash.csv', 'results/gemini-2.0-flash-lite.csv', 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano.csv',
                                       'results/grok-2-vision-1212.csv', 'results/o4-mini.csv', 'results/owl_vit.csv', 'results/yolo_uniow.csv', 'results/yolo_world.csv']
-    plot_best_worst(plot_ious_by_img(model_list), model_list)
-    # plot_dataset_info_k_means_cluster(model_list=model_list)
-    # plot_numb_boxes_box_and_whiskers_comparison(model_list)
-    # reorganize_csvs(model_list)
-    # plot_bar_chart_by_annotation_average_score(model_list)
-    # plot_box_and_whiskers_comparison(model_list_selective)
-    # for i in model_list:
-    #     plot_prediction_grid(i, 64)
-    # plot_box_and_whiskers_comparison(model_list)
-    # plot_prediction_grid('results/yolo_uniow.csv', 64)
-    # plot_prediction_grid('results/gpt-4.1-mini.csv', 9)
+    plot_predition_grid(good_example_list, gt_file='ground_truth_test.csv')
+
