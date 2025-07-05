@@ -23,7 +23,7 @@ To view the dataset on Roboflow Universe, type the following in a search bar:
 ```bash
 https://universe.roboflow.com/correllmateo/grasp_vlm
 ```
-
+Here, you can view all images with their cooresponding bounding boxes.
 
 
 
