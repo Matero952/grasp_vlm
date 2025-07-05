@@ -3,7 +3,7 @@
 ## Getting Set Up
 
 ```bash
-#First, clone the repository
+#First, clone the repository and make sure that you have Conda.
 git clone https://github.com/Matero952/grasp_vlm.git
 #Then prepare to download the dataset from roboflow, which can be viewed publicly on Roboflow Universe!
 cd; cd Downloads
@@ -11,13 +11,15 @@ cd; cd Downloads
 curl -L "https://universe.roboflow.com/ds/68uOhAw4FO?key=MDbLOu2FRo" > roboflow.zip; unzip roboflow.zip; rm roboflow.zip
 #Afterwards, remove unnecessary files.
 rm README.dataset.txt; rm README.roboflow.txt
-#Then, move 'train' to the directory that the cloned repo is in and rename 'train' to 'grasp_vlm_dataset'
-mv train/ replace_this_with_where_you_cloned_the_repo/grasp_vlm/grasp_vlm_dataset
-#Done!
+#Then, move train to the right directory. Replace the '*' with the cloned repo's path.
+mv train/ */grasp_vlm_dataset
+#Replace the '*' with the cloned repo's path.
+cd *
+
 ```
 
-## How to View on Roboflow Universe
-In a search bar, type:
+## How to View on Roboflow Universe:
+To view the dataset on Roboflow Universe, type the following in a search bar:
 ```bash
 https://universe.roboflow.com/correllmateo/grasp_vlm
 ```
