@@ -633,15 +633,76 @@ def plot_bar_chart_by_annotation_average_score(path_list):
                 
 good_example_list = [('gemini-2.5-flash-lite-preview-06-17', 19), ('gemini-2.5-flash-lite-preview-06-17', 491), ('gemini-2.5-flash-lite-preview-06-17', 461), ('yolo_world', 214), ('yolo_world', 351), ('gemini-2.5-flash-lite-preview-06-17', 371), ('gemini-2.5-flash-lite-preview-06-17', 430), ('yolo_uniow', 215), ('gemini-2.5-flash-lite-preview-06-17', 8)]
 bad_example_list = [('grok-2-vision-1212', 263), ('gpt-4.1-nano', 199), ('gpt-4.1-mini', 6), ('owl_vit', 48), ('yolo_uniow', 8), ('yolo_uniow', 167), ('claude-3-haiku-20240307', 263), ('o4-mini', 78), ('o4-mini', 99)]
-def ious_to_token_usage(model_list):
-    for path in model_list:
-        df = pd.read_csv(path)
+def plot_ious_vs_tokens(model_list):
+    num_models = len(model_list)
+    cols = 2
+    rows = (num_models + 1) // cols
+
+    fig, axs = plt.subplots(rows, cols, figsize=(10, 5 * rows))
+    axs = axs.flatten()
+
+    for i, path in enumerate(model_list):
+        df = pd.read_csv(path, sep=';', encoding='utf-8')
+        df.columns = df.columns.str.replace('"', '', regex=False).str.strip()
+        model_name = Path(path).stem
+
+        ious = []
+        tokens = []
+        for _, row in df.iterrows():
+            iou_dict = ast.literal_eval(row['ious'])
+            for _, value in iou_dict.items():
+                ious.append(float(value))
+                tokens.append(int(row['output_tokens']))
+
+        ax = axs[i]
+        ax.scatter(tokens, ious, alpha=0.6, label='Data Points')
+
+        # Line of best fit
+        m, b = np.polyfit(tokens, ious, 1)
+        x_vals = np.array(tokens)
+        ax.plot(x_vals, m * x_vals + b, color='red', label='Best Fit Line')
+
+        ax.set_title(model_name)
+        ax.set_xlabel("Output Tokens")
+        ax.set_ylabel("IoU")
+        ax.legend()
+        ax.grid(True)
+
+    # Hide unused subplots if any
+    for j in range(i + 1, len(axs)):
+        fig.delaxes(axs[j])
+
+    fig.tight_layout()
+    plt.show()
+    plt.savefig('results/ious_vs_token_usage_by_model.png', dpi=300, bbox_inches='tight')
+    
+    # for path in model_list:
+    #     df = pd.read_csv(path, sep=';', encoding='utf-8')
+    #     df.columns = df.columns.str.replace('"', '', regex=False).str.strip()
+    #     for index, row in df.iterrows():
+    #         for key, value in ast.literal_eval(row['ious']).items():
+    #             ious_to_token_usage_dict.append((value, row['output_tokens']))
+
+    # print(len(ious_to_token_usage_dict))
+    # ious, tokens = zip(*ious_to_token_usage_dict)
+    # ious = np.array([float(i) for i in ious])
+    # tokens = np.array([int(i) for i in tokens])
+    # plt.scatter(ious, tokens, alpha=0.6, edgecolor=None, linewidths=0.1)
+    # m, b = np.polyfit(ious, tokens, 1)
+    # plt.plot(ious, m * ious + b, color='red', linewidth=2, label='Trend Line')
+    # plt.xlabel('IoU', fontsize=14)
+    # plt.ylabel('Output Tokens', fontsize=14)
+    # plt.tight_layout()
+    # plt.show()
+    # plt.savefig('results/ious_vs_token_usage.png', dpi=300, bbox_inches='tight')
     
     
 if __name__ == "__main__":
     model_list_selective = ['results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano.csv']
     model_list = ['results/claude-3-5-haiku-latest.csv', 'results/claude-3-haiku-20240307.csv', 'results/gemini-2.5-flash-lite-preview-06-17.csv',
                                       'results/gemini-2.5-flash.csv', 'results/gemini-2.0-flash-lite.csv', 'results/gpt-4.1-mini.csv', 'results/gpt-4.1-nano.csv',
-                                      'results/grok-2-vision-1212.csv', 'results/o4-mini.csv', 'results/owl_vit.csv', 'results/yolo_uniow.csv', 'results/yolo_world.csv']
-    plot_predition_grid(good_example_list, gt_file='ground_truth_test.csv')
+                                      'results/grok-2-vision-1212.csv', 'results/o4-mini.csv']
+    
+    # plot_predition_grid(good_example_list, gt_file='ground_truth_test.csv')
+    plot_ious_vs_tokens(model_list)
 
